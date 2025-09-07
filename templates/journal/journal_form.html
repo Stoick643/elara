@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Write Journal - Elara{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-journal-text"></i> Journal Entry
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="journalForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Mood and Energy Sliders -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-emoji-smile"></i> How's your mood?
+                            </label>
+                            <div class="d-flex align-items-center">
+                                {{ form.mood_score(class="form-range flex-grow-1", min="1", max="10", step="1", id="moodSlider") }}
+                                <span class="ms-3 fs-3" id="moodEmoji">😐</span>
+                            </div>
+                            <small class="text-muted">Current: <span id="moodValue">5</span>/10</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-lightning"></i> Energy level?
+                            </label>
+                            <div class="d-flex align-items-center">
+                                {{ form.energy_level(class="form-range flex-grow-1", min="1", max="10", step="1", id="energySlider") }}
+                                <span class="ms-3 fs-3" id="energyEmoji">⚡</span>
+                            </div>
+                            <small class="text-muted">Current: <span id="energyValue">5</span>/10</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Journal Content -->
+                    <div class="mb-4">
+                        {{ form.content.label(class="form-label") }}
+                        {{ form.content(class="form-control", rows="12", placeholder="What's on your mind today? How are you feeling? What happened? What are you grateful for?", id="journalContent") }}
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">
+                                <span id="charCount">0</span> characters
+                            </small>
+                            <small class="text-success" id="autoSaveStatus"></small>
+                        </div>
+                        {% if form.content.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.content.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Prompts for inspiration -->
+                    <div class="mb-4">
+                        <label class="form-label">Need inspiration?</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary prompt-btn">
+                                What went well today?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary prompt-btn">
+                                What challenged me?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary prompt-btn">
+                                What am I grateful for?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary prompt-btn">
+                                What did I learn?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary prompt-btn">
+                                How can tomorrow be better?
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('journal.history') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-clock-history"></i> View History
+                        </a>
+                        {{ form.submit(class="btn btn-primary btn-lg px-5") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mood and energy emoji mappings
+const moodEmojis = {
+    1: "😢", 2: "😞", 3: "😔", 4: "😕", 5: "😐",
+    6: "🙂", 7: "😊", 8: "😄", 9: "😁", 10: "🤩"
+};
+
+const energyEmojis = {
+    1: "🪫", 2: "🔋", 3: "🔋", 4: "🔋", 5: "⚡",
+    6: "⚡", 7: "⚡", 8: "⚡", 9: "🔥", 10: "🚀"
+};
+
+// Update mood emoji and value
+document.getElementById('moodSlider').addEventListener('input', function() {
+    const value = this.value;
+    document.getElementById('moodValue').textContent = value;
+    document.getElementById('moodEmoji').textContent = moodEmojis[value];
+});
+
+// Update energy emoji and value
+document.getElementById('energySlider').addEventListener('input', function() {
+    const value = this.value;
+    document.getElementById('energyValue').textContent = value;
+    document.getElementById('energyEmoji').textContent = energyEmojis[value];
+});
+
+// Character counter
+document.getElementById('journalContent').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+});
+
+// Prompt buttons
+document.querySelectorAll('.prompt-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const content = document.getElementById('journalContent');
+        const prompt = this.textContent.trim();
+        
+        if (content.value) {
+            content.value += '\n\n' + prompt + '\n';
+        } else {
+            content.value = prompt + '\n';
+        }
+        
+        content.focus();
+        document.getElementById('charCount').textContent = content.value.length;
+    });
+});
+
+// Auto-save functionality
+let autoSaveTimer;
+let lastSavedContent = '';
+
+document.getElementById('journalContent').addEventListener('input', function() {
+    clearTimeout(autoSaveTimer);
+    const content = this.value;
+    
+    if (content !== lastSavedContent && content.length > 10) {
+        document.getElementById('autoSaveStatus').textContent = 'Saving...';
+        
+        autoSaveTimer = setTimeout(async () => {
+            try {
+                const response = await fetch('/journal/api/autosave', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        mood: document.getElementById('moodSlider').value,
+                        energy: document.getElementById('energySlider').value
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    lastSavedContent = content;
+                    document.getElementById('autoSaveStatus').textContent = 
+                        `Auto-saved at ${data.saved_at}`;
+                    
+                    setTimeout(() => {
+                        document.getElementById('autoSaveStatus').textContent = '';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+            }
+        }, 2000); // Save after 2 seconds of inactivity
+    }
+});
+
+// Initialize sliders with default values
+document.getElementById('moodValue').textContent = document.getElementById('moodSlider').value;
+document.getElementById('moodEmoji').textContent = moodEmojis[document.getElementById('moodSlider').value];
+document.getElementById('energyValue').textContent = document.getElementById('energySlider').value;
+document.getElementById('energyEmoji').textContent = energyEmojis[document.getElementById('energySlider').value];
+</script>
+{% endblock %}

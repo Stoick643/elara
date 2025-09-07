@@ -1,0 +1,68 @@
+import os
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager
+from models import db, User
+from config import config
+
+def create_app(config_name=None):
+    """Application factory pattern."""
+    app = Flask(__name__)
+    
+    # Load configuration
+    if config_name is None:
+        config_name = os.environ.get('FLASK_ENV', 'development')
+    app.config.from_object(config[config_name])
+    
+    # Initialize extensions
+    db.init_app(app)
+    
+    # Initialize Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    # Register blueprints
+    from routes import auth_bp, dashboard_bp, journal_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(journal_bp, url_prefix='/journal')
+    
+    # Create database tables
+    with app.app_context():
+        db.create_all()
+        
+        # Create default user if not exists
+        if User.query.count() == 0:
+            default_user = User(
+                username=app.config['DEFAULT_USERNAME']
+            )
+            default_user.set_password(app.config['DEFAULT_PASSWORD'])
+            db.session.add(default_user)
+            db.session.commit()
+            print(f"Created default user: {app.config['DEFAULT_USERNAME']}")
+    
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+    
+    # Root route
+    @app.route('/')
+    def index():
+        return redirect(url_for('dashboard.dashboard'))
+    
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)
