@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Habits - Elara{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Habits</h1>
+    <a href="{{ url_for('habits.create_habit_wizard') }}" class="btn btn-warning">
+        <i class="bi bi-plus"></i> New Habit
+    </a>
+</div>
+
+{% if habits %}
+    <div class="row g-4">
+        {% for habit in habits %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">{{ habit.name }}</h5>
+                        <span class="badge bg-{{ 'warning' if habit.active else 'secondary' }}">
+                            {{ 'Active' if habit.active else 'Paused' }}
+                        </span>
+                    </div>
+                    
+                    {% if habit.description %}
+                    <p class="card-text text-muted small">{{ habit.description[:80] }}{% if habit.description|length > 80 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    <!-- Streak Display -->
+                    <div class="text-center mb-3">
+                        <div class="display-4">{{ habit.get_streak_emoji() }}</div>
+                        <div class="fw-bold">{{ habit.streak_count }} day streak</div>
+                        <small class="text-muted">{{ habit.frequency|capitalize }} habit</small>
+                    </div>
+                    
+                    <!-- Habit Structure -->
+                    <div class="mb-3">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-muted small">Cue</div>
+                                <div class="small fw-bold">{{ habit.cue[:15] if habit.cue else 'None' }}{% if habit.cue and habit.cue|length > 15 %}...{% endif %}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted small">Routine</div>
+                                <div class="small fw-bold">{{ habit.routine[:15] if habit.routine else 'None' }}{% if habit.routine and habit.routine|length > 15 %}...{% endif %}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted small">Reward</div>
+                                <div class="small fw-bold">{{ habit.reward[:15] if habit.reward else 'None' }}{% if habit.reward and habit.reward|length > 15 %}...{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Today's Check-in -->
+                    <div class="mb-3">
+                        {% set completed_today = habit.is_completed_today() %}
+                        {% if completed_today %}
+                            <div class="alert alert-success py-2 text-center">
+                                <i class="bi bi-check-circle"></i> Completed today! 🎉
+                            </div>
+                        {% else %}
+                            <button class="btn btn-warning w-100" onclick="checkInHabit({{ habit.id }})">
+                                <i class="bi bi-check"></i> Check In Today
+                            </button>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" 
+                           class="btn btn-outline-primary btn-sm flex-grow-1">
+                            View Details
+                        </a>
+                        <a href="{{ url_for('habits.edit_habit', habit_id=habit.id) }}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-repeat" style="font-size: 4rem; color: #6c757d;"></i>
+        </div>
+        <h3 class="text-muted">No Habits Yet</h3>
+        <p class="text-muted">Build positive habits with our science-based approach!</p>
+        <a href="{{ url_for('habits.create_habit_wizard') }}" class="btn btn-warning">
+            <i class="bi bi-plus"></i> Create Your First Habit
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Check in habit
+async function checkInHabit(habitId) {
+    try {
+        const response = await fetch(`/api/habit-checkin/${habitId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            alert(data.message);
+            location.reload();
+        } else {
+            const data = await response.json();
+            alert(data.message || 'Error checking in habit');
+        }
+    } catch (error) {
+        console.error('Error checking in habit:', error);
+    }
+}
+</script>
+{% endblock %}

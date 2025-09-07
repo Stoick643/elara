@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Create Habit - Elara{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h2>🔄 Habit Creation Wizard</h2>
+            <p class="text-muted">Build lasting habits using the proven Cue-Routine-Reward framework</p>
+        </div>
+        
+        <!-- The Habit Loop Explanation -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">The Habit Loop</h5>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="bi bi-bell"></i>
+                            </div>
+                        </div>
+                        <h6>Cue</h6>
+                        <p class="small text-muted">The trigger that starts your habit</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="bi bi-play"></i>
+                            </div>
+                        </div>
+                        <h6>Routine</h6>
+                        <p class="small text-muted">The behavior you want to make automatic</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                <i class="bi bi-trophy"></i>
+                            </div>
+                        </div>
+                        <h6>Reward</h6>
+                        <p class="small text-muted">The benefit that reinforces the habit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form -->
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h4 class="mb-0 text-dark">
+                    <i class="bi bi-plus"></i> Design Your Habit
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Habit Name -->
+                    <div class="mb-4">
+                        {{ form.name.label(class="form-label fw-bold") }}
+                        {{ form.name(class="form-control") }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Keep it simple and specific (e.g., "Morning meditation", "Daily walk")</div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        {{ form.description.label(class="form-label fw-bold") }}
+                        {{ form.description(class="form-control", rows="2") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Why do you want to build this habit?</div>
+                    </div>
+                    
+                    <!-- Cue -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-bell text-primary me-2"></i>
+                            {{ form.cue.label(class="form-label fw-bold mb-0") }}
+                        </div>
+                        {{ form.cue(class="form-control") }}
+                        {% if form.cue.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.cue.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <strong>Examples:</strong> "After I wake up", "When I finish lunch", "At 7 PM alarm"
+                        </div>
+                    </div>
+                    
+                    <!-- Routine -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-play text-warning me-2"></i>
+                            {{ form.routine.label(class="form-label fw-bold mb-0") }}
+                        </div>
+                        {{ form.routine(class="form-control") }}
+                        {% if form.routine.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.routine.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <strong>Examples:</strong> "I will meditate for 5 minutes", "I will write one page", "I will do 10 pushups"
+                        </div>
+                    </div>
+                    
+                    <!-- Reward -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-trophy text-success me-2"></i>
+                            {{ form.reward.label(class="form-label fw-bold mb-0") }}
+                        </div>
+                        {{ form.reward(class="form-control") }}
+                        {% if form.reward.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.reward.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <strong>Examples:</strong> "Check it off my list", "Enjoy my morning coffee", "Feel proud of my progress"
+                        </div>
+                    </div>
+                    
+                    <!-- Frequency -->
+                    <div class="mb-4">
+                        {{ form.frequency.label(class="form-label fw-bold") }}
+                        {{ form.frequency(class="form-select") }}
+                        {% if form.frequency.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.frequency.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Start with daily habits - they're easier to maintain than sporadic ones</div>
+                    </div>
+                    
+                    <!-- Psychology Insight -->
+                    <div class="alert alert-info">
+                        <i class="bi bi-brain"></i>
+                        <strong>Habit Science:</strong> It takes an average of 66 days to form a new habit. Start small and be consistent - your brain will do the rest!
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('habits.habits_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-warning flex-grow-1") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Success Tips -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="text-muted">💡 Tips for Habit Success</h6>
+                <ul class="small text-muted mb-0">
+                    <li><strong>Start tiny:</strong> Make it so easy you can't say no</li>
+                    <li><strong>Stack habits:</strong> Attach new habits to existing ones</li>
+                    <li><strong>Track consistently:</strong> Use our daily check-in system</li>
+                    <li><strong>Celebrate small wins:</strong> Acknowledge every success</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

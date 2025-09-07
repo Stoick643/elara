@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}{{ goal.title }} - Elara{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('goals.goals_list') }}">Goals</a></li>
+                <li class="breadcrumb-item active">{{ goal.title }}</li>
+            </ol>
+        </nav>
+        <h1>{{ goal.title }}</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('goals.edit_goal', goal_id=goal.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-gear"></i> Actions
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="updateProgress({{ goal.id }})">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh Progress
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete({{ goal.id }})">
+                    <i class="bi bi-trash"></i> Delete Goal
+                </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Goal Overview -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-target"></i> Goal Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if goal.description %}
+                <p class="text-muted">{{ goal.description }}</p>
+                {% endif %}
+                
+                <!-- Progress Circle -->
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        <svg width="120" height="120" class="progress-ring">
+                            <circle cx="60" cy="60" r="50" stroke="#e9ecef" stroke-width="8" fill="transparent"/>
+                            <circle cx="60" cy="60" r="50" stroke="#28a745" stroke-width="8" fill="transparent"
+                                    stroke-dasharray="{{ 2 * 3.14159 * 50 }}" 
+                                    stroke-dashoffset="{{ 2 * 3.14159 * 50 * (1 - goal.progress / 100) }}"
+                                    transform="rotate(-90 60 60)" class="progress-circle"/>
+                        </svg>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="h3 mb-0">{{ goal.progress }}%</div>
+                            <small class="text-muted">Complete</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Goal Details -->
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="text-muted small">Status</div>
+                        <div class="fw-bold">
+                            <span class="badge bg-{{ 'success' if goal.status == 'active' else 'secondary' }}">
+                                {{ goal.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Target Date</div>
+                        <div class="fw-bold small">
+                            {% if goal.target_date %}
+                                {{ goal.target_date.strftime('%m/%d/%Y') }}
+                                {% set days_remaining = (goal.target_date - date.today()).days %}
+                                {% if days_remaining >= 0 %}
+                                    <br><span class="text-muted" style="font-size: 10px;">{{ days_remaining }} days left</span>
+                                {% else %}
+                                    <br><span class="text-danger" style="font-size: 10px;">{{ -days_remaining }} days overdue</span>
+                                {% endif %}
+                            {% else %}
+                                No deadline
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Life Area</div>
+                        <div class="fw-bold small">
+                            {% if goal.value %}
+                                {{ goal.value.name }}
+                            {% else %}
+                                General
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goal Statistics -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Progress Stats
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h4">{{ linked_tasks|selectattr('completed')|list|length }}</div>
+                        <div class="text-muted small">Tasks Done</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4">{{ linked_tasks|length }}</div>
+                        <div class="text-muted small">Total Tasks</div>
+                    </div>
+                </div>
+                
+                {% if goal.created_at %}
+                <hr>
+                <div class="text-center">
+                    <div class="text-muted small">Created</div>
+                    <div class="small">{{ goal.created_at.strftime('%B %d, %Y') }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Linked Tasks -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-task"></i> Linked Tasks
+                </h5>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#linkTaskModal">
+                    <i class="bi bi-plus"></i> Link Task
+                </button>
+            </div>
+            <div class="card-body">
+                {% if linked_tasks %}
+                    <div class="list-group list-group-flush">
+                        {% for task in linked_tasks %}
+                        <div class="list-group-item d-flex align-items-center {{ 'task-completed' if task.completed else '' }}">
+                            <input type="checkbox" 
+                                   class="form-check-input me-3" 
+                                   {% if task.completed %}checked disabled{% endif %}
+                                   {% if not task.completed %}onchange="completeTask({{ task.id }})"{% endif %}>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold {{ 'text-muted' if task.completed else '' }}">
+                                    {{ task.title }}
+                                    {% if task.completed %}
+                                        <i class="bi bi-check-circle text-success ms-2"></i>
+                                    {% endif %}
+                                </div>
+                                {% if task.description %}
+                                <div class="text-muted small">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if task.due_date %}
+                                <div class="small text-muted">
+                                    Due: {{ task.due_date.strftime('%m/%d') }}
+                                </div>
+                                {% endif %}
+                                <div class="small">
+                                    {{ task.get_energy_icon() }}
+                                    <span class="text-muted">{{ task.energy_required }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-list-task text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-2">No tasks linked yet</h5>
+                        <p class="text-muted">Link existing tasks or create new ones to track progress toward this goal.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkTaskModal">
+                            <i class="bi bi-plus"></i> Link Your First Task
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Goal Timeline (if applicable) -->
+        {% if goal.target_date %}
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock"></i> Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set days_total = (goal.target_date - goal.created_at.date()).days %}
+                {% set days_passed = (date.today() - goal.created_at.date()).days %}
+                {% set days_remaining = (goal.target_date - date.today()).days %}
+                {% set time_progress = (days_passed / days_total * 100) if days_total > 0 else 0 %}
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Time Progress</span>
+                    <span>{{ time_progress|round|int }}%</span>
+                </div>
+                <div class="progress mb-3" style="height: 8px;">
+                    <div class="progress-bar bg-warning" style="width: {{ time_progress }}%"></div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="small text-muted">Started</div>
+                        <div class="fw-bold">{{ goal.created_at.strftime('%m/%d') }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Days Left</div>
+                        <div class="fw-bold {{ 'text-danger' if days_remaining < 0 else 'text-success' if days_remaining < 7 else '' }}">
+                            {{ days_remaining if days_remaining >= 0 else 0 }}
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Target</div>
+                        <div class="fw-bold">{{ goal.target_date.strftime('%m/%d') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Link Task Modal -->
+<div class="modal fade" id="linkTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Link Task to Goal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if unlinked_tasks %}
+                <h6>Available Tasks:</h6>
+                <div class="list-group mb-3">
+                    {% for task in unlinked_tasks %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">{{ task.title }}</div>
+                                {% if task.description %}
+                                <div class="text-muted small">{{ task.description[:80] }}{% if task.description|length > 80 %}...{% endif %}</div>
+                                {% endif %}
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="linkTask({{ task.id }}, {{ goal.id }})">
+                                Link
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No unlinked tasks available. Create new tasks from the Tasks page.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary">Create New Task</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-circle {
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.task-completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.task-completed .fw-bold {
+    text-decoration: line-through;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Complete task
+async function completeTask(taskId) {
+    try {
+        const response = await fetch(`/api/complete-task/${taskId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            location.reload(); // Refresh to show updated progress
+        }
+    } catch (error) {
+        console.error('Error completing task:', error);
+    }
+}
+
+// Link task to goal
+async function linkTask(taskId, goalId) {
+    try {
+        const response = await fetch(`/api/tasks/${taskId}/link-goal`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ goal_id: goalId })
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('linkTaskModal')).hide();
+            location.reload(); // Refresh to show linked task
+        }
+    } catch (error) {
+        console.error('Error linking task:', error);
+    }
+}
+
+// Update progress
+async function updateProgress(goalId) {
+    try {
+        const response = await fetch(`/api/goals/${goalId}/progress`);
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error updating progress:', error);
+    }
+}
+
+// Confirm delete
+function confirmDelete(goalId) {
+    if (confirm('Are you sure you want to delete this goal? Linked tasks will not be deleted.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/goals/${goalId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Add import for date object if needed
+{% if not date %}
+const date = { today: () => new Date() };
+{% endif %}
+</script>
+{% endblock %}

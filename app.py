@@ -28,9 +28,18 @@ def create_app(config_name=None):
     
     # Register blueprints
     from routes import auth_bp, dashboard_bp, journal_bp
+    from routes.goals import goals_bp
+    from routes.habits import habits_bp
+    from routes.calendar import calendar_bp
+    from routes.avatar import avatar_bp
+    
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(journal_bp, url_prefix='/journal')
+    app.register_blueprint(goals_bp, url_prefix='/goals')
+    app.register_blueprint(habits_bp, url_prefix='/habits')
+    app.register_blueprint(calendar_bp, url_prefix='/calendar')
+    app.register_blueprint(avatar_bp, url_prefix='/avatar')
     
     # Create database tables
     with app.app_context():
@@ -39,12 +48,13 @@ def create_app(config_name=None):
         # Create default user if not exists
         if User.query.count() == 0:
             default_user = User(
-                username=app.config['DEFAULT_USERNAME']
+                username=app.config['DEFAULT_USERNAME'],
+                avatar_personality='friend'  # Set default personality for testing
             )
             default_user.set_password(app.config['DEFAULT_PASSWORD'])
             db.session.add(default_user)
             db.session.commit()
-            print(f"Created default user: {app.config['DEFAULT_USERNAME']}")
+            print(f"Created default user: {app.config['DEFAULT_USERNAME']} with Friend personality")
     
     # Error handlers
     @app.errorhandler(404)
