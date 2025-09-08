@@ -32,6 +32,7 @@ def create_app(config_name=None):
     from routes.habits import habits_bp
     from routes.calendar import calendar_bp
     from routes.avatar import avatar_bp
+    from routes.chat import chat_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp)
@@ -40,6 +41,7 @@ def create_app(config_name=None):
     app.register_blueprint(habits_bp, url_prefix='/habits')
     app.register_blueprint(calendar_bp, url_prefix='/calendar')
     app.register_blueprint(avatar_bp, url_prefix='/avatar')
+    app.register_blueprint(chat_bp, url_prefix='/chat')
     
     # Create database tables
     with app.app_context():
@@ -75,4 +77,4 @@ def create_app(config_name=None):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

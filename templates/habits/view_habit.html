@@ -165,7 +165,7 @@
                                 <span class="text-muted">({{ log.completed_date.strftime('%A') }})</span>
                             </div>
                             <small class="text-muted">
-                                {{ (date.today() - log.completed_date).days }} day{{ 's' if (date.today() - log.completed_date).days != 1 else '' }} ago
+                                {{ (today - log.completed_date).days }} day{{ 's' if (today - log.completed_date).days != 1 else '' }} ago
                             </small>
                         </div>
                         {% endfor %}

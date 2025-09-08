@@ -38,18 +38,23 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{{ url_for('goals.goals_list') }}">
+                            <i class="bi bi-target"></i> Goals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('habits.habits_dashboard') }}">
+                            <i class="bi bi-repeat"></i> Habits
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('calendar.calendar_view') }}">
                             <i class="bi bi-calendar3"></i> Calendar
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="bi bi-bullseye"></i> Goals
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="bi bi-circle-half"></i> Life
+                        <a class="nav-link" href="{{ url_for('avatar.select_personality') }}">
+                            <i class="bi bi-person-circle"></i> Avatar
                         </a>
                     </li>
                     <li class="nav-item">

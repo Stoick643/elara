@@ -80,7 +80,7 @@
                         <div class="fw-bold small">
                             {% if goal.target_date %}
                                 {{ goal.target_date.strftime('%m/%d/%Y') }}
-                                {% set days_remaining = (goal.target_date - date.today()).days %}
+                                {% set days_remaining = (goal.target_date - today).days %}
                                 {% if days_remaining >= 0 %}
                                     <br><span class="text-muted" style="font-size: 10px;">{{ days_remaining }} days left</span>
                                 {% else %}
@@ -203,8 +203,8 @@
             </div>
             <div class="card-body">
                 {% set days_total = (goal.target_date - goal.created_at.date()).days %}
-                {% set days_passed = (date.today() - goal.created_at.date()).days %}
-                {% set days_remaining = (goal.target_date - date.today()).days %}
+                {% set days_passed = (today - goal.created_at.date()).days %}
+                {% set days_remaining = (goal.target_date - today).days %}
                 {% set time_progress = (days_passed / days_total * 100) if days_total > 0 else 0 %}
                 
                 <div class="d-flex justify-content-between mb-2">

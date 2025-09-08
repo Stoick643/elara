@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Your AI Coach - Elara{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1>👋 Meet Your AI Life Coach</h1>
+            <p class="lead text-muted">Choose a personality that resonates with your journey</p>
+            <small class="text-muted">Your coach will provide personalized guidance, motivation, and insights based on psychological principles</small>
+        </div>
+        
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <!-- Personality Cards -->
+            <div class="row g-4">
+                {% for key, personality in personalities.items() %}
+                <div class="col-md-6">
+                    <div class="card personality-card h-100 {{ 'selected' if current_personality == key else '' }}" 
+                         onclick="selectPersonality('{{ key }}')">
+                        <div class="card-body text-center">
+                            <!-- Personality Avatar -->
+                            <div class="personality-avatar mb-3">
+                                <span style="font-size: 4rem;">{{ personality.emoji }}</span>
+                            </div>
+                            
+                            <!-- Personality Info -->
+                            <h4 class="card-title">{{ personality.name }}</h4>
+                            <p class="text-muted">{{ personality.description }}</p>
+                            
+                            <!-- Sample Message -->
+                            <div class="sample-message p-3 bg-light rounded">
+                                <i class="bi bi-chat-quote"></i>
+                                <em>"{{ personality.sample_messages[0] }}"</em>
+                            </div>
+                            
+                            <!-- Personality Traits -->
+                            <div class="mt-3">
+                                <h6 class="text-muted">Coaching Style:</h6>
+                                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                    {% for trait in personality.traits[:3] %}
+                                    <span class="badge bg-secondary">{{ trait }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Radio Button -->
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="radio" name="personality" 
+                                       value="{{ key }}" id="{{ key }}"
+                                       {{ 'checked' if current_personality == key else '' }}>
+                                <label class="form-check-label fw-bold" for="{{ key }}">
+                                    Choose {{ personality.name }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Psychology Insight -->
+            <div class="alert alert-info mt-5">
+                <i class="bi bi-brain"></i>
+                <strong>Personality Psychology:</strong> Research shows that coaching approaches matching your personality type lead to better outcomes. You can always change your coach later in settings.
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+                    Skip for Now
+                </a>
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+            </div>
+        </form>
+        
+        <!-- Current Selection Info -->
+        {% if current_personality %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="text-success">
+                    <i class="bi bi-check-circle"></i> Current Coach: {{ personalities[current_personality].name }}
+                </h6>
+                <p class="text-muted">You can change your coach anytime by visiting this page.</p>
+                <div class="mt-3">
+                    <a href="{{ url_for('chat.chat_interface') }}" class="btn btn-success">
+                        💬 Chat with Your {{ personalities[current_personality].name }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.personality-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.personality-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: var(--bs-primary);
+}
+
+.personality-card.selected {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.personality-avatar {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sample-message {
+    border-left: 4px solid var(--bs-primary);
+    font-style: italic;
+    margin: 1rem 0;
+}
+
+.form-check-input:checked {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectPersonality(personalityKey) {
+    // Uncheck all radio buttons
+    document.querySelectorAll('input[name="personality"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Remove selected class from all cards
+    document.querySelectorAll('.personality-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Check the clicked personality
+    document.getElementById(personalityKey).checked = true;
+    
+    // Add selected class to clicked card
+    event.currentTarget.classList.add('selected');
+}
+
+// Initialize selected state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checkedRadio = document.querySelector('input[name="personality"]:checked');
+    if (checkedRadio) {
+        const card = checkedRadio.closest('.personality-card');
+        card.classList.add('selected');
+    }
+});
+</script>
+{% endblock %}

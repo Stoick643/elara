@@ -135,7 +135,8 @@ def view_habit(habit_id):
                          habit=habit,
                          calendar_data=calendar_data,
                          completion_rate=completion_rate,
-                         recent_logs=recent_logs[:10])
+                         recent_logs=recent_logs[:10],
+                         today=date.today())
 
 @habits_bp.route('/habits/<int:habit_id>/edit', methods=['GET', 'POST'])
 @login_required

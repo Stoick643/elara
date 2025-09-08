@@ -271,3 +271,139 @@ class HabitLog(db.Model):
     
     def __repr__(self):
         return f'<HabitLog {self.habit_id} - {self.completed_date}>'
+
+
+class ChatHistory(db.Model):
+    """Store conversation history with AI coach."""
+    __tablename__ = 'chat_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    role = db.Column(db.String(10), nullable=False)  # 'user' or 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    personality_used = db.Column(db.String(20), nullable=True)  # Avatar personality at time of message
+    tokens_used = db.Column(db.Integer, nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'role': self.role,
+            'content': self.content,
+            'personality': self.personality_used,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None
+        }
+    
+    def __repr__(self):
+        return f'<ChatHistory {self.role} - {self.timestamp}>'
+
+
+class WeeklyReview(db.Model):
+    """Store weekly review reflections and insights."""
+    __tablename__ = 'weekly_reviews'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    week_start_date = db.Column(db.Date, nullable=False)
+    week_end_date = db.Column(db.Date, nullable=False)
+    
+    # Reflection responses
+    goals_reflection = db.Column(db.Text, nullable=True)  # What goals did you work on?
+    wins_celebration = db.Column(db.Text, nullable=True)  # What went well?
+    challenges_faced = db.Column(db.Text, nullable=True)  # What was challenging?
+    lessons_learned = db.Column(db.Text, nullable=True)  # What did you learn?
+    next_week_focus = db.Column(db.Text, nullable=True)  # What's the focus for next week?
+    
+    # Metrics (stored as JSON)
+    performance_metrics = db.Column(db.JSON, nullable=True)  # task_completion_rate, mood_average, etc.
+    
+    # AI-generated insights
+    ai_insights = db.Column(db.Text, nullable=True)
+    ai_recommendations = db.Column(db.JSON, nullable=True)  # List of recommendations
+    
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<WeeklyReview {self.week_start_date} - {self.week_end_date}>'
+
+
+class LifeAssessment(db.Model):
+    """Wheel of Life assessment tracking."""
+    __tablename__ = 'life_assessments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Eight life dimensions (1-10 scale)
+    career = db.Column(db.Integer, nullable=False)
+    health = db.Column(db.Integer, nullable=False)
+    relationships = db.Column(db.Integer, nullable=False)
+    finance = db.Column(db.Integer, nullable=False)
+    fun_recreation = db.Column(db.Integer, nullable=False)
+    personal_growth = db.Column(db.Integer, nullable=False)
+    family = db.Column(db.Integer, nullable=False)
+    spirituality = db.Column(db.Integer, nullable=False)
+    
+    # Optional reflection
+    notes = db.Column(db.Text, nullable=True)
+    focus_areas = db.Column(db.JSON, nullable=True)  # Areas user wants to improve
+    
+    assessment_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def get_average_score(self):
+        """Calculate average score across all dimensions."""
+        scores = [self.career, self.health, self.relationships, self.finance,
+                 self.fun_recreation, self.personal_growth, self.family, self.spirituality]
+        return sum(scores) / len(scores)
+    
+    def get_dimensions_dict(self):
+        """Return dimensions as dictionary for visualization."""
+        return {
+            'career': self.career,
+            'health': self.health,
+            'relationships': self.relationships,
+            'finance': self.finance,
+            'fun_recreation': self.fun_recreation,
+            'personal_growth': self.personal_growth,
+            'family': self.family,
+            'spirituality': self.spirituality
+        }
+    
+    def __repr__(self):
+        return f'<LifeAssessment {self.user_id} - {self.assessment_date}>'
+
+
+class Insight(db.Model):
+    """Store AI-generated insights and patterns."""
+    __tablename__ = 'insights'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    insight_type = db.Column(db.String(50), nullable=False)  # 'correlation', 'pattern', 'trend', 'recommendation'
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    
+    # Statistical confidence (0.0 to 1.0)
+    confidence_score = db.Column(db.Float, nullable=True)
+    
+    # Supporting data (stored as JSON)
+    supporting_data = db.Column(db.JSON, nullable=True)  # Charts data, statistics, examples
+    
+    # Status tracking
+    status = db.Column(db.String(20), default='new')  # 'new', 'viewed', 'acted_on', 'dismissed'
+    viewed_at = db.Column(db.DateTime, nullable=True)
+    
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)  # Some insights may become stale
+    
+    def mark_as_viewed(self):
+        """Mark insight as viewed."""
+        if self.status == 'new':
+            self.status = 'viewed'
+            self.viewed_at = datetime.utcnow()
+            db.session.commit()
+    
+    def __repr__(self):
+        return f'<Insight {self.insight_type} - {self.title}>'

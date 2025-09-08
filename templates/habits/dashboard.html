@@ -97,9 +97,16 @@
 
 {% block extra_js %}
 <script>
-// Check in habit
+// Enhanced habit check-in with celebrations
 async function checkInHabit(habitId) {
+    const checkbox = document.querySelector(`input[onclick="checkInHabit(${habitId})"]`);
+    const habitCard = checkbox.closest('.card');
+    
     try {
+        // Disable checkbox immediately
+        checkbox.disabled = true;
+        checkbox.checked = true;
+        
         const response = await fetch(`/api/habit-checkin/${habitId}`, {
             method: 'POST',
             headers: {
@@ -109,15 +116,198 @@ async function checkInHabit(habitId) {
         
         if (response.ok) {
             const data = await response.json();
-            alert(data.message);
-            location.reload();
+            
+            // Trigger celebration animation
+            await celebrateHabitCompletion(habitCard, data);
+            
+            // Show success message
+            showToast(data.message, 'success');
+            
+            // Update streak display if available
+            updateStreakDisplay(habitCard, data.streak_count);
+            
+            // Reload after animation
+            setTimeout(() => location.reload(), 2000);
         } else {
             const data = await response.json();
-            alert(data.message || 'Error checking in habit');
+            checkbox.disabled = false;
+            checkbox.checked = false;
+            showToast(data.message || 'Error checking in habit', 'error');
         }
     } catch (error) {
         console.error('Error checking in habit:', error);
+        checkbox.disabled = false;
+        checkbox.checked = false;
+        showToast('Network error. Please try again.', 'error');
     }
 }
+
+// Celebration animation for habit completion
+async function celebrateHabitCompletion(habitCard, data) {
+    return new Promise((resolve) => {
+        // Add success styling
+        habitCard.style.transform = 'scale(1.05)';
+        habitCard.style.boxShadow = '0 8px 30px rgba(40, 167, 69, 0.3)';
+        habitCard.style.borderColor = '#28a745';
+        habitCard.classList.add('border-success');
+        
+        // Create confetti effect
+        createConfettiEffect(habitCard);
+        
+        // Create floating streak indicator
+        if (data.streak_count) {
+            createFloatingStreak(habitCard, data.streak_count);
+        }
+        
+        // Success pulse animation
+        habitCard.style.animation = 'success-pulse 0.6s ease-out';
+        
+        // Reset after animation
+        setTimeout(() => {
+            habitCard.style.transform = 'scale(1)';
+            habitCard.style.animation = '';
+            resolve();
+        }, 1500);
+    });
+}
+
+// Create confetti effect
+function createConfettiEffect(container) {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+    const rect = container.getBoundingClientRect();
+    
+    for (let i = 0; i < 15; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.left = rect.left + rect.width / 2 + 'px';
+        confetti.style.top = rect.top + rect.height / 2 + 'px';
+        confetti.style.width = '8px';
+        confetti.style.height = '8px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.borderRadius = '50%';
+        confetti.style.pointerEvents = 'none';
+        confetti.style.zIndex = '9999';
+        
+        document.body.appendChild(confetti);
+        
+        // Animate confetti
+        const angle = (Math.PI * 2 * i) / 15;
+        const velocity = 100 + Math.random() * 50;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        confetti.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+            { transform: `translate(${vx}px, ${vy}px) scale(0.5)`, opacity: 0 }
+        ], {
+            duration: 1000 + Math.random() * 500,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        }).onfinish = () => confetti.remove();
+    }
+}
+
+// Create floating streak indicator
+function createFloatingStreak(container, streakCount) {
+    const rect = container.getBoundingClientRect();
+    const streakElement = document.createElement('div');
+    
+    streakElement.innerHTML = `
+        <div style="
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            font-size: 14px;
+        ">
+            🔥 ${streakCount} day streak!
+        </div>
+    `;
+    
+    streakElement.style.position = 'fixed';
+    streakElement.style.left = rect.left + rect.width / 2 - 60 + 'px';
+    streakElement.style.top = rect.top - 20 + 'px';
+    streakElement.style.pointerEvents = 'none';
+    streakElement.style.zIndex = '9999';
+    
+    document.body.appendChild(streakElement);
+    
+    // Animate floating up
+    streakElement.animate([
+        { transform: 'translateY(0) scale(0.8)', opacity: 0 },
+        { transform: 'translateY(-30px) scale(1)', opacity: 1, offset: 0.3 },
+        { transform: 'translateY(-60px) scale(1)', opacity: 1, offset: 0.7 },
+        { transform: 'translateY(-100px) scale(0.8)', opacity: 0 }
+    ], {
+        duration: 2000,
+        easing: 'ease-out'
+    }).onfinish = () => streakElement.remove();
+}
+
+// Update streak display in card
+function updateStreakDisplay(habitCard, newStreakCount) {
+    const streakBadge = habitCard.querySelector('.badge');
+    if (streakBadge && newStreakCount) {
+        // Animate streak count update
+        const oldText = streakBadge.textContent;
+        streakBadge.style.animation = 'streak-bounce 0.5s ease-out';
+        
+        setTimeout(() => {
+            streakBadge.textContent = `${newStreakCount}🔥`;
+            streakBadge.style.animation = '';
+        }, 250);
+    }
+}
+
+// Toast notification system (reusable)
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(container.lastElementChild);
+    toast.show();
+    
+    container.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+
+// Add CSS animations
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes streak-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .habit-card-success {
+            animation: success-pulse 0.6s ease-out;
+        }
+    `;
+    document.head.appendChild(style);
+});
 </script>
 {% endblock %}

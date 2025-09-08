@@ -80,10 +80,15 @@
                     </div>
                     
                     <!-- Submit Buttons -->
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('journal.history') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-clock-history"></i> View History
-                        </a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i> Cancel
+                            </a>
+                            <a href="{{ url_for('journal.history') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-clock-history"></i> History
+                            </a>
+                        </div>
                         {{ form.submit(class="btn btn-primary btn-lg px-5") }}
                     </div>
                 </form>

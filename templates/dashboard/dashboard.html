@@ -304,12 +304,38 @@ async function completeTask(taskId) {
     }
 }
 
-// Add quick task (placeholder - implement later)
-function addQuickTask(input) {
-    if (input.value.trim()) {
-        console.log('Adding task:', input.value);
-        // TODO: Implement task creation
-        input.value = '';
+// Add quick task
+async function addQuickTask(input) {
+    const title = input.value.trim();
+    if (!title) return;
+    
+    try {
+        const response = await fetch('/api/quick-task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                title: title,
+                energy: 'medium'
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            input.value = '';
+            // Show success briefly
+            input.placeholder = '✓ Task added!';
+            setTimeout(() => {
+                input.placeholder = '+ Add quick task';
+                location.reload(); // Refresh to show new task
+            }, 1000);
+        } else {
+            alert('Error adding task. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error adding task:', error);
+        alert('Error adding task. Please try again.');
     }
 }
 

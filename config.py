@@ -29,6 +29,15 @@ class Config:
     # Application settings
     ITEMS_PER_PAGE = 10
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
+    # LLM Configuration
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
+    MOONSHOT_API_KEY = os.environ.get('MOONSHOT_API_KEY')
+    LLM_PROVIDER = os.environ.get('LLM_PROVIDER', 'gemini')
+    LLM_MAX_TOKENS = int(os.environ.get('LLM_MAX_TOKENS', '2048'))
+    LLM_TEMPERATURE = float(os.environ.get('LLM_TEMPERATURE', '0.7'))
+    LLM_RATE_LIMIT = int(os.environ.get('LLM_RATE_LIMIT', '10'))
 
 class DevelopmentConfig(Config):
     """Development configuration."""

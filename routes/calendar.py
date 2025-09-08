@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 import calendar as cal
-from models import db, Task, Goal, Habit, JournalEntry
+from models import db, Task, Goal, Habit, JournalEntry, HabitLog
 from sqlalchemy import func, and_
 
 calendar_bp = Blueprint('calendar', __name__)
@@ -31,19 +31,18 @@ def get_month_calendar_data(year, month):
     ).all()
     
     # Get habit completions for this month
-    habits = Habit.query.filter_by(user_id=current_user.id, active=True).all()
     habit_completions = {}
-    for habit in habits:
-        completions = habit.habit_logs.filter(
-            and_(
-                habit.habit_logs.property.mapper.class_.completed_date >= first_day,
-                habit.habit_logs.property.mapper.class_.completed_date <= last_day
-            )
-        ).all()
-        for completion in completions:
-            if completion.completed_date not in habit_completions:
-                habit_completions[completion.completed_date] = 0
-            habit_completions[completion.completed_date] += 1
+    habit_logs = HabitLog.query.join(Habit).filter(
+        Habit.user_id == current_user.id,
+        HabitLog.completed_date >= first_day,
+        HabitLog.completed_date <= last_day
+    ).all()
+    
+    for log in habit_logs:
+        date_str = log.completed_date.strftime('%Y-%m-%d')
+        if date_str not in habit_completions:
+            habit_completions[date_str] = 0
+        habit_completions[date_str] += 1
     
     # Organize data by date
     calendar_data = {}

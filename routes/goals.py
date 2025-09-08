@@ -145,7 +145,8 @@ def view_goal(goal_id):
                          goal=goal, 
                          linked_tasks=linked_tasks,
                          unlinked_tasks=unlinked_tasks,
-                         task_link_form=task_link_form)
+                         task_link_form=task_link_form,
+                         today=date.today())
 
 @goals_bp.route('/goals/<int:goal_id>/delete', methods=['POST'])
 @login_required

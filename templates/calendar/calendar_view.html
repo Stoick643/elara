@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - Elara{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>📅 Calendar</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('calendar.calendar_view') }}" class="btn btn-outline-primary">Today</a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddModal">
+            <i class="bi bi-plus"></i> Quick Add
+        </button>
+    </div>
+</div>
+
+<!-- Calendar Navigation -->
+<div class="row align-items-center mb-4">
+    <div class="col">
+        <a href="{{ url_for('calendar.calendar_view', year=prev_year, month=prev_month) }}" 
+           class="btn btn-outline-secondary">
+            <i class="bi bi-chevron-left"></i> Previous
+        </a>
+    </div>
+    <div class="col text-center">
+        <h2>{{ month_name }} {{ year }}</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('calendar.calendar_view', year=next_year, month=next_month) }}" 
+           class="btn btn-outline-secondary">
+            Next <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-bordered mb-0 calendar-table">
+            <thead>
+                <tr class="bg-light">
+                    <th class="text-center">Sun</th>
+                    <th class="text-center">Mon</th>
+                    <th class="text-center">Tue</th>
+                    <th class="text-center">Wed</th>
+                    <th class="text-center">Thu</th>
+                    <th class="text-center">Fri</th>
+                    <th class="text-center">Sat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in month_calendar %}
+                <tr>
+                    {% for day in week %}
+                    <td class="calendar-day {% if day == 0 %}other-month{% else %}current-month{% endif %}"
+                        {% if day != 0 %}data-date="{{ year }}-{{ '%02d'|format(month) }}-{{ '%02d'|format(day) }}"{% endif %}>
+                        
+                        {% if day != 0 %}
+                            {% set day_date = (year|string + '-' + ('%02d'|format(month)) + '-' + ('%02d'|format(day))) %}
+                            {% set day_data = calendar_data.get(day_date, {}) %}
+                            
+                            <!-- Day Number -->
+                            <div class="day-number">{{ day }}</div>
+                            
+                            <!-- Day Content -->
+                            <div class="day-content">
+                                <!-- Tasks -->
+                                {% if day_data.tasks %}
+                                <div class="tasks-indicator">
+                                    <span class="badge bg-primary">{{ day_data.tasks|length }} tasks</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Habits -->
+                                {% if day_data.habits_completed and day_data.habits_completed > 0 %}
+                                <div class="habits-indicator">
+                                    <span class="badge bg-warning">{{ day_data.habits_completed }} habits</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Journal -->
+                                {% if day_data.journal_entries %}
+                                <div class="journal-indicator">
+                                    {% if day_data.mood_avg %}
+                                        {% if day_data.mood_avg >= 7 %}
+                                            <span class="mood-indicator">😊</span>
+                                        {% elif day_data.mood_avg >= 5 %}
+                                            <span class="mood-indicator">😐</span>
+                                        {% else %}
+                                            <span class="mood-indicator">😔</span>
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="badge bg-success">Journal</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6>📊 Legend</h6>
+                <div class="d-flex flex-wrap gap-3">
+                    <div><span class="badge bg-primary"></span> Tasks</div>
+                    <div><span class="badge bg-warning"></span> Habits</div>
+                    <div><span class="badge bg-success"></span> Journal</div>
+                    <div><span>😊😐😔</span> Mood</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6>💡 Quick Tip</h6>
+                <p class="mb-0 text-muted small">
+                    Click on any day to see details and add content. Use the calendar to plan your goals and track your progress over time.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Modal -->
+<div class="modal fade" id="quickAddModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Add</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Add to:</label>
+                    <select class="form-select" id="addType">
+                        <option value="task">Task</option>
+                        <option value="habit">Habit Check-in</option>
+                        <option value="journal">Journal Entry</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Date:</label>
+                    <input type="date" class="form-control" id="quickDate" value="{{ today.isoformat() }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Content:</label>
+                    <input type="text" class="form-control" id="quickContent" placeholder="Enter details...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="quickAdd()">
+                    <span class="add-text">Add</span>
+                    <span class="add-spinner d-none">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Adding...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="modal fade" id="dayDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dayDetailTitle">Day Overview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayDetailContent">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="openQuickAddForDate()">
+                    <i class="bi bi-plus"></i> Add Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.calendar-table {
+    table-layout: fixed;
+}
+
+.calendar-table th {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    font-weight: bold;
+    padding: 10px 5px;
+}
+
+.calendar-day {
+    height: 120px;
+    vertical-align: top;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+}
+
+.calendar-day.current-month {
+    background-color: white;
+}
+
+.calendar-day.other-month {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.day-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tasks-indicator,
+.habits-indicator,
+.journal-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.mood-indicator {
+    font-size: 12px;
+}
+
+/* Today highlight */
+.calendar-day[data-date="{{ today.isoformat() }}"] {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+}
+
+.calendar-day[data-date="{{ today.isoformat() }}"] .day-number {
+    color: #1976d2;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedDate = null;
+
+// Enhanced quick add functionality
+async function quickAdd() {
+    const type = document.getElementById('addType').value;
+    const date = document.getElementById('quickDate').value;
+    const content = document.getElementById('quickContent').value;
+    
+    if (!content.trim()) {
+        showToast('Please enter some content', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    toggleAddButtonLoading(true);
+    
+    try {
+        let response;
+        if (type === 'task') {
+            response = await fetch('/api/quick-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    title: content,
+                    energy: 'medium',
+                    due_date: date
+                })
+            });
+        } else if (type === 'journal') {
+            // Create minimal journal entry
+            response = await fetch('/journal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `content=${encodeURIComponent(content)}&mood_score=5`
+            });
+        } else {
+            throw new Error('Habit check-ins not supported via quick add');
+        }
+        
+        if (response.ok) {
+            showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} added successfully!`, 'success');
+            document.getElementById('quickContent').value = '';
+            bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
+            // Reload calendar to show new item
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            throw new Error('Failed to add item');
+        }
+    } catch (error) {
+        console.error('Error adding item:', error);
+        showToast('Error adding item. Please try again.', 'error');
+    } finally {
+        toggleAddButtonLoading(false);
+    }
+}
+
+// Show day detail modal with enhanced content
+async function showDayDetails(dateStr) {
+    selectedDate = dateStr;
+    const modal = new bootstrap.Modal(document.getElementById('dayDetailModal'));
+    const title = document.getElementById('dayDetailTitle');
+    const content = document.getElementById('dayDetailContent');
+    
+    // Format date nicely
+    const date = new Date(dateStr + 'T00:00:00');
+    const formattedDate = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    title.textContent = formattedDate;
+    content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Loading day details...</p></div>';
+    modal.show();
+    
+    try {
+        // Fetch day data (you'd implement this API endpoint)
+        const response = await fetch(`/api/calendar/date/${dateStr}`);
+        if (response.ok) {
+            const data = await response.json();
+            renderDayContent(data);
+        } else {
+            throw new Error('Failed to load day data');
+        }
+    } catch (error) {
+        console.error('Error loading day details:', error);
+        content.innerHTML = `
+            <div class="alert alert-warning">
+                <h6>Day Overview</h6>
+                <p>Unable to load detailed information. Click "Add Item" to add content for this day.</p>
+            </div>`;
+    }
+}
+
+// Render day content in modal
+function renderDayContent(data) {
+    const content = document.getElementById('dayDetailContent');
+    let html = '';
+    
+    // Tasks section
+    if (data.tasks && data.tasks.length > 0) {
+        html += '<div class="mb-4"><h6><i class="bi bi-check-circle"></i> Tasks</h6>';
+        data.tasks.forEach(task => {
+            html += `<div class="d-flex align-items-center mb-2">
+                <input type="checkbox" ${task.completed ? 'checked disabled' : ''} class="form-check-input me-2">
+                <span class="${task.completed ? 'text-muted text-decoration-line-through' : ''}">${task.title}</span>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    
+    // Habits section
+    if (data.habits_completed && data.habits_completed > 0) {
+        html += `<div class="mb-4"><h6><i class="bi bi-repeat"></i> Habits</h6>
+                 <p class="text-success">${data.habits_completed} habit(s) completed! 🎉</p></div>`;
+    }
+    
+    // Journal section
+    if (data.journal_entries && data.journal_entries.length > 0) {
+        html += '<div class="mb-4"><h6><i class="bi bi-journal-text"></i> Journal</h6>';
+        data.journal_entries.forEach(entry => {
+            const moodEmoji = entry.mood_score >= 7 ? '😊' : entry.mood_score >= 5 ? '😐' : '😔';
+            html += `<div class="card card-body bg-light mb-2">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted">Journal Entry</small>
+                    <span>${moodEmoji} ${entry.mood_score}/10</span>
+                </div>
+                <p class="mb-0">${entry.content.substring(0, 200)}${entry.content.length > 200 ? '...' : ''}</p>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    
+    if (!html) {
+        html = `<div class="alert alert-info">
+            <h6>No activities yet</h6>
+            <p>This day is free! Click "Add Item" to plan something.</p>
+        </div>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+// Open quick add for specific date
+function openQuickAddForDate() {
+    bootstrap.Modal.getInstance(document.getElementById('dayDetailModal')).hide();
+    if (selectedDate) {
+        document.getElementById('quickDate').value = selectedDate;
+    }
+    new bootstrap.Modal(document.getElementById('quickAddModal')).show();
+}
+
+// Enhanced calendar day interactions
+function enableDayClickInteraction() {
+    document.querySelectorAll('.calendar-day[data-date]').forEach(day => {
+        // Add hover effects
+        day.style.transition = 'all 0.2s ease';
+        
+        day.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('other-month')) {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            }
+        });
+        
+        day.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = 'none';
+        });
+        
+        // Click handler for day details
+        day.addEventListener('click', function() {
+            const dateStr = this.getAttribute('data-date');
+            if (dateStr && !this.classList.contains('other-month')) {
+                showDayDetails(dateStr);
+            }
+        });
+    });
+}
+
+// Toggle loading state for add button
+function toggleAddButtonLoading(isLoading) {
+    const textSpan = document.querySelector('.add-text');
+    const spinnerSpan = document.querySelector('.add-spinner');
+    const button = textSpan.closest('button');
+    
+    if (isLoading) {
+        textSpan.classList.add('d-none');
+        spinnerSpan.classList.remove('d-none');
+        button.disabled = true;
+    } else {
+        textSpan.classList.remove('d-none');
+        spinnerSpan.classList.add('d-none');
+        button.disabled = false;
+    }
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Add to toast container (create if doesn't exist)
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(container.lastElementChild);
+    toast.show();
+    
+    // Remove element after it's hidden
+    container.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+
+// Initialize calendar interactions when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    enableDayClickInteraction();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ personality|title }} - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 0 auto;
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .avatar-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .message.user {
+        justify-content: flex-end;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        word-wrap: break-word;
+    }
+    
+    .message.user .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message.assistant .message-bubble {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .message-time {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    
+    .chat-input-container {
+        padding: 20px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+    }
+    
+    .chat-input-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 25px;
+        outline: none;
+        font-size: 15px;
+    }
+    
+    .chat-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .send-button {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: transform 0.2s;
+    }
+    
+    .send-button:hover {
+        transform: translateY(-2px);
+    }
+    
+    .send-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 15px;
+        background: #f8f9fa;
+    }
+    
+    .typing-indicator.active {
+        display: block;
+    }
+    
+    .typing-dots {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #6c757d;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
+    }
+    
+    /* Personality-specific styles */
+    .personality-sage .avatar-icon {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    }
+    
+    .personality-champion .avatar-icon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .personality-friend .avatar-icon {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .personality-strategist .avatar-icon {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .personality-zen_master .avatar-icon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="chat-container personality-{{ personality }}">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="avatar-icon">
+                {% if personality == 'sage' %}
+                    🧙
+                {% elif personality == 'champion' %}
+                    🏆
+                {% elif personality == 'friend' %}
+                    🤝
+                {% elif personality == 'strategist' %}
+                    🎯
+                {% elif personality == 'zen_master' %}
+                    🧘
+                {% else %}
+                    😊
+                {% endif %}
+            </div>
+            <div>
+                <h4 class="mb-0">{{ personality|title|replace('_', ' ') }}</h4>
+                <small>Your AI Life Coach</small>
+            </div>
+            <div class="ms-auto">
+                <button class="btn btn-sm btn-light" onclick="clearChat()">
+                    Clear Chat
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            {% if conversation_history %}
+                {% for msg in conversation_history %}
+                    <div class="message {{ msg.role }}">
+                        <div>
+                            <div class="message-bubble">
+                                {% if msg.role == 'assistant' %}
+                                    <div class="markdown-content">{{ msg.content|safe }}</div>
+                                {% else %}
+                                    {{ msg.content|replace('\n', '<br>')|safe }}
+                                {% endif %}
+                            </div>
+                            {% if msg.timestamp %}
+                                <div class="message-time text-end">
+                                    {{ msg.timestamp }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <h5>Welcome! How can I help you today?</h5>
+                    <p>I'm here to support your personal growth journey.</p>
+                </div>
+            {% endif %}
+            
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">{{ personality|title|replace('_', ' ') }} is thinking</small>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <form id="chatForm" class="chat-input-group">
+                <input type="text" 
+                       id="messageInput" 
+                       class="chat-input" 
+                       placeholder="Type your message..."
+                       maxlength="2000"
+                       autocomplete="off">
+                <button type="submit" class="send-button" id="sendButton">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/lib/marked.umd.js"></script>
+<script>
+// Auto-scroll to bottom of chat
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Format timestamp
+function formatTime(date) {
+    return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+    });
+}
+
+// Add message to chat
+function addMessage(content, role) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    const now = new Date();
+    
+    // Process content based on role
+    let processedContent;
+    if (role === 'assistant') {
+        // Parse markdown for AI responses
+        processedContent = marked.parse(content);
+    } else {
+        // Escape HTML for user messages and preserve newlines
+        processedContent = escapeHtml(content).replace(/\n/g, '<br>');
+    }
+    
+    messageDiv.innerHTML = `
+        <div>
+            <div class="message-bubble">
+                ${processedContent}
+            </div>
+            <div class="message-time text-end">
+                ${formatTime(now)}
+            </div>
+        </div>
+    `;
+    
+    chatMessages.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+    scrollToBottom();
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Show/hide typing indicator
+function setTyping(show) {
+    const indicator = document.getElementById('typingIndicator');
+    if (show) {
+        indicator.classList.add('active');
+        scrollToBottom();
+    } else {
+        indicator.classList.remove('active');
+    }
+}
+
+// Handle form submission
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const input = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message
+    addMessage(message, 'user');
+    
+    // Clear input and disable while sending
+    input.value = '';
+    input.disabled = true;
+    sendButton.disabled = true;
+    
+    // Show typing indicator
+    setTyping(true);
+    
+    try {
+        // Send message to server
+        const response = await fetch('/chat/api/chat/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Add AI response
+            addMessage(data.response, 'assistant');
+        } else {
+            // Show error
+            alert(data.error || 'Failed to send message');
+        }
+    } catch (error) {
+        console.error('Chat error:', error);
+        alert('Failed to connect to AI coach. Please try again.');
+    } finally {
+        // Re-enable input
+        setTyping(false);
+        input.disabled = false;
+        sendButton.disabled = false;
+        input.focus();
+    }
+});
+
+// Clear chat history
+async function clearChat() {
+    if (!confirm('Are you sure you want to clear the conversation history?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/chat/api/chat/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            // Reload page to show empty chat
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Clear chat error:', error);
+        alert('Failed to clear chat history');
+    }
+}
+
+// Initial scroll to bottom
+scrollToBottom();
+
+// Focus input on load
+document.getElementById('messageInput').focus();
+</script>
+{% endblock %}
