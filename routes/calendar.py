@@ -44,39 +44,52 @@ def get_month_calendar_data(year, month):
             habit_completions[date_str] = 0
         habit_completions[date_str] += 1
     
+    # Get goal deadlines and milestones for this month
+    goals_with_dates = Goal.query.filter(
+        Goal.user_id == current_user.id,
+        Goal.target_date >= first_day,
+        Goal.target_date <= last_day,
+        Goal.status.in_(['active', 'completed'])
+    ).all()
+    
     # Organize data by date
     calendar_data = {}
     
     # Group tasks by date
     for task in tasks:
-        if task.due_date not in calendar_data:
-            calendar_data[task.due_date] = {
+        date_key = task.due_date.strftime('%Y-%m-%d')
+        if date_key not in calendar_data:
+            calendar_data[date_key] = {
                 'tasks': [],
                 'completed_tasks': 0,
                 'pending_tasks': 0,
                 'journal_entries': [],
                 'habits_completed': 0,
-                'mood_avg': None
+                'mood_avg': None,
+                'goals': [],
+                'goal_deadlines': 0
             }
-        calendar_data[task.due_date]['tasks'].append(task)
+        calendar_data[date_key]['tasks'].append(task)
         if task.completed:
-            calendar_data[task.due_date]['completed_tasks'] += 1
+            calendar_data[date_key]['completed_tasks'] += 1
         else:
-            calendar_data[task.due_date]['pending_tasks'] += 1
+            calendar_data[date_key]['pending_tasks'] += 1
     
     # Group journal entries by date
     for entry in journal_entries:
-        entry_date = entry.created_at.date()
-        if entry_date not in calendar_data:
-            calendar_data[entry_date] = {
+        date_key = entry.created_at.date().strftime('%Y-%m-%d')
+        if date_key not in calendar_data:
+            calendar_data[date_key] = {
                 'tasks': [],
                 'completed_tasks': 0,
                 'pending_tasks': 0,
                 'journal_entries': [],
                 'habits_completed': 0,
-                'mood_avg': None
+                'mood_avg': None,
+                'goals': [],
+                'goal_deadlines': 0
             }
-        calendar_data[entry_date]['journal_entries'].append(entry)
+        calendar_data[date_key]['journal_entries'].append(entry)
     
     # Add habit completions
     for completion_date, count in habit_completions.items():
@@ -87,9 +100,28 @@ def get_month_calendar_data(year, month):
                 'pending_tasks': 0,
                 'journal_entries': [],
                 'habits_completed': 0,
-                'mood_avg': None
+                'mood_avg': None,
+                'goals': [],
+                'goal_deadlines': 0
             }
         calendar_data[completion_date]['habits_completed'] = count
+    
+    # Add goal deadlines and milestones
+    for goal in goals_with_dates:
+        date_key = goal.target_date.strftime('%Y-%m-%d')
+        if date_key not in calendar_data:
+            calendar_data[date_key] = {
+                'tasks': [],
+                'completed_tasks': 0,
+                'pending_tasks': 0,
+                'journal_entries': [],
+                'habits_completed': 0,
+                'mood_avg': None,
+                'goals': [],
+                'goal_deadlines': 0
+            }
+        calendar_data[date_key]['goals'].append(goal)
+        calendar_data[date_key]['goal_deadlines'] += 1
     
     # Calculate mood averages for days with journal entries
     for day_date, data in calendar_data.items():
@@ -147,7 +179,8 @@ def calendar_view(year=None, month=None):
                          prev_month=prev_month,
                          next_year=next_year,
                          next_month=next_month,
-                         today=date.today())
+                         today=date.today(),
+                         date=date)  # Pass the date class for template use
 
 @calendar_bp.route('/calendar/week')
 @calendar_bp.route('/calendar/week/<int:year>/<int:week>')
@@ -166,8 +199,9 @@ def week_view(year=None, week=None):
     week_data = {}
     for day in week_dates:
         calendar_data = get_month_calendar_data(day.year, day.month)
-        if day in calendar_data:
-            week_data[day] = calendar_data[day]
+        day_key = day.strftime('%Y-%m-%d')
+        if day_key in calendar_data:
+            week_data[day] = calendar_data[day_key]
         else:
             week_data[day] = {
                 'tasks': [],
@@ -371,3 +405,30 @@ def today_view():
                          today_data=today_data,
                          habit_status=habit_status,
                          goals=goals)
+
+
+@calendar_bp.route('/api/calendar/task/<int:task_id>/toggle', methods=['POST'])
+@login_required
+def toggle_task_calendar(task_id):
+    """Toggle task completion from calendar view."""
+    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
+    
+    if task.completed:
+        task.completed = False
+        task.completed_at = None
+        message = f'Task "{task.title}" marked as incomplete'
+        action = 'uncompleted'
+    else:
+        task.mark_complete()
+        message = f'Task "{task.title}" completed! 🎉'
+        action = 'completed'
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': message,
+        'action': action,
+        'task_id': task.id,
+        'completed': task.completed
+    })

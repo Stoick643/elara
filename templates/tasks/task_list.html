@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Task Management - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .task-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+        transition: all 0.2s ease;
+    }
+    
+    .task-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+    
+    .task-card.completed {
+        opacity: 0.7;
+        border-left-color: #22c55e !important;
+    }
+    
+    .task-card.pending {
+        border-left-color: #3b82f6;
+    }
+    
+    .task-card.overdue {
+        border-left-color: #ef4444;
+    }
+    
+    .task-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .task-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .task-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .task-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .energy-high { color: #ef4444; }
+    .energy-medium { color: #f59e0b; }
+    .energy-low { color: #22c55e; }
+    
+    .stats-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        color: white;
+        margin: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .filter-pills {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-pill {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .filter-pill.active {
+        background: #667eea;
+        color: white;
+    }
+    
+    .filter-pill:not(.active) {
+        background: #e5e7eb;
+        color: #374151;
+    }
+    
+    .filter-pill:not(.active):hover {
+        background: #d1d5db;
+        text-decoration: none;
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Task Management Header -->
+<div class="task-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-list-task"></i> Task Management</h1>
+            <p class="lead mb-0">Organize and track your daily tasks</p>
+        </div>
+        <div>
+            <a href="{{ url_for('tasks.create_task') }}" class="btn btn-light btn-lg">
+                <i class="bi bi-plus-circle"></i> New Task
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row mt-3">
+        <div class="col">
+            <div class="stats-card">
+                <span class="stat-number">{{ total_tasks }}</span>
+                <small>Total Tasks</small>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stats-card">
+                <span class="stat-number">{{ pending_tasks }}</span>
+                <small>Pending</small>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stats-card">
+                <span class="stat-number">{{ completed_tasks }}</span>
+                <small>Completed</small>
+            </div>
+        </div>
+        {% if overdue_tasks > 0 %}
+        <div class="col">
+            <div class="stats-card" style="background: rgba(239, 68, 68, 0.2);">
+                <span class="stat-number">{{ overdue_tasks }}</span>
+                <small>Overdue</small>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="filter-card">
+    <form method="GET" class="row g-3">
+        <!-- Filter Pills -->
+        <div class="col-12">
+            <label class="form-label fw-bold">Filter Tasks:</label>
+            <div class="filter-pills">
+                <a href="{{ url_for('tasks.task_list') }}" 
+                   class="filter-pill {{ 'active' if filter_type == 'all' else '' }}">
+                    All Tasks ({{ total_tasks }})
+                </a>
+                <a href="{{ url_for('tasks.task_list', filter='pending') }}" 
+                   class="filter-pill {{ 'active' if filter_type == 'pending' else '' }}">
+                    Pending ({{ pending_tasks }})
+                </a>
+                <a href="{{ url_for('tasks.task_list', filter='completed') }}" 
+                   class="filter-pill {{ 'active' if filter_type == 'completed' else '' }}">
+                    Completed ({{ completed_tasks }})
+                </a>
+                {% if overdue_tasks > 0 %}
+                <a href="{{ url_for('tasks.task_list', filter='overdue') }}" 
+                   class="filter-pill {{ 'active' if filter_type == 'overdue' else '' }}">
+                    Overdue ({{ overdue_tasks }})
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Search and Goal Filter -->
+        <div class="col-md-6">
+            <label class="form-label">Search Tasks:</label>
+            <input type="text" class="form-control" name="search" value="{{ search }}" 
+                   placeholder="Search by title...">
+        </div>
+        
+        <div class="col-md-4">
+            <label class="form-label">Filter by Goal:</label>
+            <select class="form-select" name="goal_id">
+                <option value="">All Goals</option>
+                {% for goal in goals %}
+                <option value="{{ goal.id }}" {{ 'selected' if goal.id == goal_filter else '' }}>
+                    {{ goal.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+                <a href="{{ url_for('tasks.task_list') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Task List -->
+{% if tasks %}
+    {% for task in tasks %}
+    <div class="task-card {{ 'completed' if task.completed else 'pending' }} {{ 'overdue' if not task.completed and task.due_date and task.due_date < today else '' }}">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="task-title">
+                    {% if task.completed %}
+                        <i class="bi bi-check-circle text-success"></i>
+                    {% else %}
+                        <i class="bi bi-circle"></i>
+                    {% endif %}
+                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
+                       class="text-decoration-none ms-2">
+                        {{ task.title }}
+                    </a>
+                </div>
+                
+                {% if task.description %}
+                <div class="task-description text-muted mb-2">
+                    {{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="task-meta">
+                    <span class="energy-{{ task.energy_required }}">
+                        {{ task.get_energy_icon() }} {{ task.energy_required|title }} energy
+                    </span>
+                    
+                    {% if task.due_date %}
+                    <span class="{{ 'text-danger' if not task.completed and task.due_date < today else '' }}">
+                        <i class="bi bi-calendar-event"></i>
+                        {{ task.due_date.strftime('%b %d, %Y') }}
+                        {% if not task.completed and task.due_date < today %}
+                            (Overdue)
+                        {% elif task.due_date == today %}
+                            (Due today)
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                    
+                    {% if task.goal %}
+                    <span>
+                        <i class="bi bi-bullseye"></i>
+                        <a href="{{ url_for('goals.view_goal', goal_id=task.goal.id) }}" 
+                           class="text-decoration-none">
+                            {{ task.goal.title }}
+                        </a>
+                    </span>
+                    {% endif %}
+                    
+                    <span>
+                        <i class="bi bi-calendar-plus"></i>
+                        Created {{ task.created_at.strftime('%b %d') }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="task-actions">
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="toggleTask({{ task.id }})" 
+                        title="{{ 'Mark incomplete' if task.completed else 'Mark complete' }}">
+                    <i class="bi bi-{{ 'x-circle' if task.completed else 'check-circle' }}"></i>
+                </button>
+                
+                <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" 
+                   class="btn btn-sm btn-outline-secondary" title="Edit task">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                
+                <button class="btn btn-sm btn-outline-danger" 
+                        onclick="deleteTask({{ task.id }}, '{{ task.title }}')" 
+                        title="Delete task">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <i class="bi bi-list-task" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h3>No tasks found</h3>
+        {% if search or goal_filter or filter_type != 'all' %}
+            <p>Try adjusting your filters or <a href="{{ url_for('tasks.task_list') }}">view all tasks</a>.</p>
+        {% else %}
+            <p>Ready to get started? <a href="{{ url_for('tasks.create_task') }}">Create your first task</a>!</p>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle task completion
+async function toggleTask(taskId) {
+    try {
+        const response = await fetch(`/tasks/api/tasks/${taskId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast(data.message, 'success');
+            
+            // Reload to show updated task state
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            throw new Error('Failed to toggle task');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error updating task. Please try again.', 'error');
+    }
+}
+
+// Delete task confirmation
+function deleteTask(taskId, taskTitle) {
+    if (confirm(`Are you sure you want to delete "${taskTitle}"?`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/tasks/tasks/${taskId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(container.lastElementChild);
+    toast.show();
+    
+    container.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+</script>
+{% endblock %}

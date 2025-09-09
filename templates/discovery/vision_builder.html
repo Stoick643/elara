@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Create Your Life Vision - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vision-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .vision-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .values-foundation {
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .value-tag {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0.25rem;
+        display: inline-block;
+    }
+    
+    .vision-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .vision-prompt {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 0 10px 10px 0;
+        font-style: italic;
+    }
+    
+    .char-counter {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+    
+    .progress-indicator {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+    
+    .progress-step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .progress-step.completed {
+        background: #22c55e;
+        color: white;
+    }
+    
+    .progress-step.current {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .progress-step.pending {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+    
+    .ai-guidance-box {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        display: none;
+    }
+    
+    .ai-guidance-box.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .cta-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+    
+    .cta-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .cta-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .secondary-button {
+        background: transparent;
+        color: #667eea;
+        border: 2px solid #667eea;
+        padding: 0.8rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .secondary-button:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .floating-help {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+    
+    .help-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transition: transform 0.2s;
+    }
+    
+    .help-button:hover {
+        transform: scale(1.1);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vision-container mt-4">
+    <div class="vision-header">
+        <h1><i class="bi bi-eye"></i> Create Your Life Vision</h1>
+        <p class="mb-0">Transform your values into a compelling vision that guides your life's direction</p>
+    </div>
+
+    <!-- Values Foundation -->
+    {% if values_assessment %}
+    <div class="values-foundation">
+        <h4><i class="bi bi-foundation"></i> Your Values Foundation</h4>
+        <p class="mb-2">Your vision will be built upon these core values:</p>
+        <div>
+            {% for value in values_assessment.get_top_value_names() %}
+                <span class="value-tag">{{ value }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+        <div class="progress-step completed">
+            <i class="bi bi-check-lg"></i> Values Discovered
+        </div>
+        <div class="progress-step current">
+            <i class="bi bi-eye"></i> Vision Creation
+        </div>
+        <div class="progress-step pending">
+            <i class="bi bi-target"></i> Goal Alignment
+        </div>
+    </div>
+
+    <form id="visionForm">
+        <!-- Core Vision Statement -->
+        <div class="vision-section">
+            <h3><i class="bi bi-star"></i> Your Life Vision Statement</h3>
+            <div class="vision-prompt">
+                💭 <strong>Reflection Prompt:</strong> Imagine yourself 10 years from now, living your ideal life. What do you see? How do you feel? What are you doing? Write in the present tense as if you're already living this vision.
+            </div>
+            
+            <textarea name="vision_statement" id="visionStatement" class="form-control" rows="5" 
+                    placeholder="I am living a life of... I wake up each day feeling... My days are filled with... I am known for... I contribute to the world by..."
+                    maxlength="1000" required>{% if existing_vision %}{{ existing_vision.vision_statement }}{% endif %}</textarea>
+            <div class="char-counter">
+                <span id="visionCounter">0</span>/1000 characters
+            </div>
+        </div>
+
+        <!-- Mission Statement -->
+        <div class="vision-section">
+            <h3><i class="bi bi-compass"></i> Your Personal Mission</h3>
+            <div class="vision-prompt">
+                🎯 <strong>Reflection Prompt:</strong> What is your unique purpose? Why do you exist? What positive impact do you want to make in the world? Think about the intersection of what you love, what you're good at, and what the world needs.
+            </div>
+            
+            <textarea name="mission_statement" id="missionStatement" class="form-control" rows="4"
+                    placeholder="My purpose is to... I exist to... I will make a difference by..."
+                    maxlength="500">{% if existing_vision %}{{ existing_vision.mission_statement }}{% endif %}</textarea>
+            <div class="char-counter">
+                <span id="missionCounter">0</span>/500 characters
+            </div>
+        </div>
+
+        <!-- Peak Experiences -->
+        <div class="vision-section">
+            <h3><i class="bi bi-heart-fill"></i> When You Feel Most Alive</h3>
+            <div class="vision-prompt">
+                ✨ <strong>Reflection Prompt:</strong> Think of moments when you felt completely energized, fulfilled, and authentic. What were you doing? Who were you with? What patterns do you notice?
+            </div>
+            
+            <textarea name="peak_experiences" class="form-control" rows="3"
+                    placeholder="I feel most alive when... The moments I treasure most are when..."
+                    maxlength="400">{% if existing_vision %}{{ existing_vision.peak_experiences }}{% endif %}</textarea>
+        </div>
+
+        <!-- Future Self Visualization -->
+        <div class="vision-section">
+            <h3><i class="bi bi-binoculars"></i> Future Self Visualization</h3>
+            <div class="vision-prompt">
+                🔮 <strong>Visualization Exercise:</strong> Close your eyes and imagine meeting your future self - the person you become when living your full potential. What would they tell you? What advice would they give? What would they be proud of?
+            </div>
+            
+            <textarea name="future_self_visualization" class="form-control" rows="3"
+                    placeholder="My future self would say... They would be proud that I... The advice they'd give me is..."
+                    maxlength="400">{% if existing_vision %}{{ existing_vision.future_self_visualization }}{% endif %}</textarea>
+        </div>
+
+        <!-- Legacy Intention -->
+        <div class="vision-section">
+            <h3><i class="bi bi-tree"></i> Your Legacy</h3>
+            <div class="vision-prompt">
+                🌳 <strong>Legacy Question:</strong> If you could only be remembered for one thing, what would it be? How do you want to be remembered by the people who matter most to you?
+            </div>
+            
+            <textarea name="legacy_intention" class="form-control" rows="3"
+                    placeholder="I want to be remembered for... My legacy will be... The impact I want to leave is..."
+                    maxlength="400">{% if existing_vision %}{{ existing_vision.legacy_intention }}{% endif %}</textarea>
+        </div>
+
+        <!-- Confidence Level -->
+        <div class="vision-section">
+            <h3><i class="bi bi-speedometer2"></i> Vision Confidence</h3>
+            <label class="form-label">How confident do you feel about this vision? (1 = uncertain, 10 = absolutely certain)</label>
+            <input type="range" name="confidence_level" class="form-range" min="1" max="10" value="{% if existing_vision %}{{ existing_vision.confidence_level or 7 }}{% else %}7{% endif %}" id="confidenceRange">
+            <div class="d-flex justify-content-between text-muted small">
+                <span>Uncertain (1)</span>
+                <span id="confidenceValue">7</span>
+                <span>Absolutely Certain (10)</span>
+            </div>
+        </div>
+
+        <!-- AI Guidance Box -->
+        <div class="ai-guidance-box" id="aiGuidance">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-robot text-primary" style="font-size: 1.5rem; margin-top: 0.25rem;"></i>
+                <div class="flex-grow-1">
+                    <h5>AI Coach Guidance</h5>
+                    <div id="guidanceContent">Click "Get AI Guidance" for personalized suggestions based on your values.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center mt-4">
+            <button type="button" class="secondary-button me-3" onclick="getAIGuidance()">
+                <i class="bi bi-robot"></i> Get AI Guidance
+            </button>
+            <button type="submit" class="cta-button">
+                <i class="bi bi-check-circle"></i> Save My Vision
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Floating Help -->
+<div class="floating-help">
+    <button class="help-button" data-bs-toggle="tooltip" title="Need help? Get AI coaching!" onclick="getAIGuidance()">
+        <i class="bi bi-question-lg"></i>
+    </button>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="savingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h5>Creating Your Vision...</h5>
+                <p class="text-muted mb-0">Saving your life's compass</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counters
+    setupCharacterCounter('visionStatement', 'visionCounter');
+    setupCharacterCounter('missionStatement', 'missionCounter');
+    
+    // Confidence range display
+    const confidenceRange = document.getElementById('confidenceRange');
+    const confidenceValue = document.getElementById('confidenceValue');
+    confidenceRange.addEventListener('input', function() {
+        confidenceValue.textContent = this.value;
+    });
+    
+    // Form submission
+    document.getElementById('visionForm').addEventListener('submit', submitVision);
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function setupCharacterCounter(textareaId, counterId) {
+    const textarea = document.getElementById(textareaId);
+    const counter = document.getElementById(counterId);
+    
+    function updateCounter() {
+        counter.textContent = textarea.value.length;
+        if (textarea.value.length > textarea.maxLength * 0.9) {
+            counter.style.color = '#dc2626';
+        } else {
+            counter.style.color = '#6b7280';
+        }
+    }
+    
+    textarea.addEventListener('input', updateCounter);
+    updateCounter(); // Initial count
+}
+
+async function getAIGuidance() {
+    const guidanceBox = document.getElementById('aiGuidance');
+    const guidanceContent = document.getElementById('guidanceContent');
+    
+    // Show loading state
+    guidanceBox.classList.add('active');
+    guidanceContent.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Getting personalized guidance...';
+    
+    try {
+        // Collect current form data for context
+        const formData = new FormData(document.getElementById('visionForm'));
+        const context = {
+            current_vision: formData.get('vision_statement') || '',
+            current_mission: formData.get('mission_statement') || '',
+            peak_experiences: formData.get('peak_experiences') || '',
+            legacy_intention: formData.get('legacy_intention') || ''
+        };
+        
+        const response = await fetch('/discovery/api/discovery/ai-guidance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'vision',
+                context: context
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            guidanceContent.innerHTML = result.guidance;
+        } else {
+            guidanceContent.innerHTML = '<div class="text-danger">Unable to get guidance right now. Please try again.</div>';
+        }
+    } catch (error) {
+        guidanceContent.innerHTML = '<div class="text-danger">Network error. Please check your connection and try again.</div>';
+        console.error('AI guidance error:', error);
+    }
+}
+
+async function submitVision(e) {
+    e.preventDefault();
+    
+    // Basic validation
+    const visionStatement = document.getElementById('visionStatement').value.trim();
+    if (!visionStatement) {
+        alert('Please write your vision statement before saving.');
+        return;
+    }
+    
+    // Show loading modal
+    const modal = new bootstrap.Modal(document.getElementById('savingModal'));
+    modal.show();
+    
+    // Prepare vision data
+    const formData = new FormData(e.target);
+    const visionData = {
+        vision_statement: formData.get('vision_statement'),
+        mission_statement: formData.get('mission_statement'),
+        peak_experiences: formData.get('peak_experiences'),
+        future_self_visualization: formData.get('future_self_visualization'),
+        legacy_intention: formData.get('legacy_intention'),
+        confidence_level: parseInt(formData.get('confidence_level'))
+    };
+    
+    try {
+        const response = await fetch('/discovery/api/discovery/vision/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(visionData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = result.redirect_url;
+        } else {
+            modal.hide();
+            alert('Error: ' + (result.error || 'Failed to save vision'));
+        }
+    } catch (error) {
+        modal.hide();
+        alert('Network error. Please try again.');
+        console.error('Vision save error:', error);
+    }
+}
+</script>
+{% endblock %}

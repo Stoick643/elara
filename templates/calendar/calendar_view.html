@@ -1,15 +1,248 @@
 {% extends "base.html" %}
 
-{% block title %}Calendar - Elara{% endblock %}
+{% block title %}Execute Calendar - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .calendar-table {
+        table-layout: fixed;
+    }
+    
+    .calendar-cell {
+        height: 120px;
+        width: 14.28%;
+        padding: 4px;
+        vertical-align: top;
+        position: relative;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .calendar-cell.today {
+        background: rgba(102, 126, 234, 0.1);
+        border: 2px solid #667eea;
+    }
+    
+    .calendar-cell.other-month {
+        background: #f8f9fa;
+        color: #9ca3af;
+    }
+    
+    .day-number {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .day-activities {
+        font-size: 0.68rem;
+        line-height: 1.1;
+        margin-top: 2px;
+    }
+    
+    /* Google Calendar-style activities */
+    .cal-activity {
+        margin: 1px 0;
+        padding: 1px 3px;
+        border-radius: 2px;
+        cursor: pointer;
+        border-left: 2px solid;
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.15s ease;
+        font-size: 0.68rem;
+    }
+    
+    .cal-activity:hover {
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transform: translateX(1px);
+    }
+    
+    .cal-activity-content {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    
+    .cal-text {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    
+    .cal-check {
+        font-size: 0.7rem;
+        width: 8px;
+        text-align: center;
+    }
+    
+    .cal-check.checked {
+        color: #22c55e;
+        font-weight: bold;
+    }
+    
+    .cal-icon {
+        font-size: 0.65rem;
+    }
+    
+    .cal-progress {
+        font-size: 0.6rem;
+        color: #666;
+        margin-left: auto;
+    }
+    
+    /* Activity type colors */
+    .cal-task {
+        border-left-color: #3b82f6;
+        color: #1e40af;
+    }
+    
+    .cal-task.completed {
+        border-left-color: #22c55e;
+        color: #166534;
+        opacity: 0.75;
+    }
+    
+    .cal-task.completed .cal-text {
+        text-decoration: line-through;
+    }
+    
+    .cal-goal {
+        border-left-color: #ec4899;
+        color: #be185d;
+        font-weight: 500;
+    }
+    
+    .cal-habit {
+        border-left-color: #f59e0b;
+        color: #92400e;
+    }
+    
+    .cal-journal {
+        border-left-color: #8b5cf6;
+        color: #7c3aed;
+    }
+    
+    .cal-more {
+        font-size: 0.6rem;
+        color: #6b7280;
+        text-align: center;
+        padding: 1px;
+        cursor: pointer;
+        border-top: 1px dotted #d1d5db;
+        margin-top: 2px;
+    }
+    
+    .cal-more:hover {
+        color: #374151;
+        background: rgba(0,0,0,0.05);
+    }
+    
+    .mood-indicator {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        font-size: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .mood-great { background: #22c55e; }
+    .mood-good { background: #84cc16; }
+    .mood-okay { background: #fbbf24; }
+    .mood-poor { background: #f97316; }
+    .mood-bad { background: #ef4444; }
+    
+    .quick-actions {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        display: none;
+    }
+    
+    .calendar-cell:hover .quick-actions {
+        display: block;
+    }
+    
+    .quick-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+        margin-left: 1px;
+        cursor: pointer;
+    }
+    
+    .legend {
+        display: flex;
+        gap: 1rem;
+        margin: 1rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>📅 Calendar</h1>
-    <div class="d-flex gap-2">
-        <a href="{{ url_for('calendar.calendar_view') }}" class="btn btn-outline-primary">Today</a>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddModal">
-            <i class="bi bi-plus"></i> Quick Add
-        </button>
+<div class="calendar-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-calendar-event"></i> Execute Calendar</h1>
+            <p class="mb-0">Your values-driven daily command center</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('calendar.calendar_view') }}" class="btn btn-light btn-sm">Today</a>
+            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#quickAddModal">
+                <i class="bi bi-plus"></i> Quick Add
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+    <div class="legend-item">
+        <div class="legend-color" style="border-left: 3px solid #3b82f6; background: rgba(255, 255, 255, 0.9);"></div>
+        <span>○ Tasks</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="border-left: 3px solid #ec4899; background: rgba(255, 255, 255, 0.9);"></div>
+        <span>🎯 Goals</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="border-left: 3px solid #f59e0b; background: rgba(255, 255, 255, 0.9);"></div>
+        <span>🔥 Habits</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="border-left: 3px solid #8b5cf6; background: rgba(255, 255, 255, 0.9);"></div>
+        <span>📝 Journal</span>
     </div>
 </div>
 
@@ -51,47 +284,120 @@
                 {% for week in month_calendar %}
                 <tr>
                     {% for day in week %}
-                    <td class="calendar-day {% if day == 0 %}other-month{% else %}current-month{% endif %}"
-                        {% if day != 0 %}data-date="{{ year }}-{{ '%02d'|format(month) }}-{{ '%02d'|format(day) }}"{% endif %}>
+                    {% set day_date = date(year, month, day if day > 0 else 1) %}
+                    {% set is_today = (day_date == today) %}
+                    {% set day_str = day_date.strftime('%Y-%m-%d') %}
+                    {% set day_data = calendar_data.get(day_str, {}) %}
+                    
+                    <td class="calendar-cell 
+                        {% if day == 0 %}other-month{% endif %}
+                        {% if is_today %}today{% endif %}"
+                        data-date="{{ day_str }}">
                         
                         {% if day != 0 %}
-                            {% set day_date = (year|string + '-' + ('%02d'|format(month)) + '-' + ('%02d'|format(day))) %}
-                            {% set day_data = calendar_data.get(day_date, {}) %}
-                            
                             <!-- Day Number -->
                             <div class="day-number">{{ day }}</div>
                             
-                            <!-- Day Content -->
-                            <div class="day-content">
-                                <!-- Tasks -->
-                                {% if day_data.tasks %}
-                                <div class="tasks-indicator">
-                                    <span class="badge bg-primary">{{ day_data.tasks|length }} tasks</span>
-                                </div>
+                            <!-- Mood Indicator -->
+                            {% if day_data.get('mood_avg') %}
+                                {% set mood = day_data.mood_avg %}
+                                <div class="mood-indicator 
+                                    {% if mood >= 8 %}mood-great
+                                    {% elif mood >= 6 %}mood-good
+                                    {% elif mood >= 4 %}mood-okay
+                                    {% elif mood >= 2 %}mood-poor
+                                    {% else %}mood-bad{% endif %}"></div>
+                            {% endif %}
+                            
+                            <!-- Day Activities - Google Calendar Style -->
+                            <div class="day-activities">
+                                {% set all_activities = [] %}
+                                
+                                <!-- Collect all activities -->
+                                {% for task in day_data.get('tasks', []) %}
+                                    {% set _ = all_activities.append({
+                                        'type': 'task',
+                                        'title': task.title,
+                                        'completed': task.completed,
+                                        'id': task.id,
+                                        'energy': task.get_energy_icon(),
+                                        'url': url_for('tasks.task_detail', task_id=task.id),
+                                        'priority': 1 if not task.completed else 3
+                                    }) %}
+                                {% endfor %}
+                                
+                                {% for goal in day_data.get('goals', []) %}
+                                    {% set _ = all_activities.append({
+                                        'type': 'goal',
+                                        'title': 'Goal: ' + goal.title,
+                                        'progress': goal.progress,
+                                        'id': goal.id,
+                                        'url': url_for('goals.view_goal', goal_id=goal.id),
+                                        'priority': 0
+                                    }) %}
+                                {% endfor %}
+                                
+                                {% if day_data.get('habits_completed', 0) > 0 %}
+                                    {% set _ = all_activities.append({
+                                        'type': 'habit',
+                                        'title': day_data.habits_completed|string + ' habit(s) completed',
+                                        'url': url_for('habits.habits_dashboard'),
+                                        'priority': 2
+                                    }) %}
                                 {% endif %}
                                 
-                                <!-- Habits -->
-                                {% if day_data.habits_completed and day_data.habits_completed > 0 %}
-                                <div class="habits-indicator">
-                                    <span class="badge bg-warning">{{ day_data.habits_completed }} habits</span>
-                                </div>
-                                {% endif %}
+                                {% for entry in day_data.get('journal_entries', [])[:1] %}
+                                    {% set _ = all_activities.append({
+                                        'type': 'journal',
+                                        'title': 'Journal entry',
+                                        'mood': entry.get_mood_emoji() if entry.mood_score else '',
+                                        'url': url_for('journal.journal'),
+                                        'priority': 2
+                                    }) %}
+                                {% endfor %}
                                 
-                                <!-- Journal -->
-                                {% if day_data.journal_entries %}
-                                <div class="journal-indicator">
-                                    {% if day_data.mood_avg %}
-                                        {% if day_data.mood_avg >= 7 %}
-                                            <span class="mood-indicator">😊</span>
-                                        {% elif day_data.mood_avg >= 5 %}
-                                            <span class="mood-indicator">😐</span>
-                                        {% else %}
-                                            <span class="mood-indicator">😔</span>
+                                <!-- Sort by priority and display -->
+                                {% set sorted_activities = all_activities|sort(attribute='priority') %}
+                                {% for activity in sorted_activities[:4] %}
+                                <div class="cal-activity cal-{{ activity.type }} {{ 'completed' if activity.get('completed') else '' }}"
+                                     onclick="handleActivityClick(event, '{{ activity.url }}', {{ activity.get('id', 0) }}, '{{ activity.type }}')"
+                                     title="{{ activity.title }}"
+                                     data-activity-id="{{ activity.get('id', 0) }}"
+                                     data-activity-type="{{ activity.type }}">
+                                    <div class="cal-activity-content">
+                                        {% if activity.type == 'task' %}
+                                            <span class="cal-check {{ 'checked' if activity.completed else '' }}">
+                                                {% if activity.completed %}✓ {% else %}○ {% endif %}
+                                            </span>
+                                            <span class="cal-text">{{ activity.title[:20] }}{% if activity.title|length > 20 %}...{% endif %}</span>
+                                        {% elif activity.type == 'goal' %}
+                                            <span class="cal-icon">🎯</span>
+                                            <span class="cal-text">{{ activity.title[:18] }}{% if activity.title|length > 18 %}...{% endif %}</span>
+                                            <span class="cal-progress">{{ activity.progress }}%</span>
+                                        {% elif activity.type == 'habit' %}
+                                            <span class="cal-icon">🔥</span>
+                                            <span class="cal-text">{{ activity.title }}</span>
+                                        {% elif activity.type == 'journal' %}
+                                            <span class="cal-icon">{{ activity.mood or '📝' }}</span>
+                                            <span class="cal-text">{{ activity.title }}</span>
                                         {% endif %}
-                                    {% endif %}
-                                    <span class="badge bg-success">Journal</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Show "more" indicator -->
+                                {% if all_activities|length > 4 %}
+                                <div class="cal-more" onclick="showDayDetails('{{ day_str }}')" title="Click to see all activities">
+                                    +{{ all_activities|length - 4 }} more...
                                 </div>
                                 {% endif %}
+                            </div>
+                            
+                            <!-- Quick Actions (on hover) -->
+                            <div class="quick-actions">
+                                <button class="quick-btn" title="Add task" onclick="quickAddTask('{{ day_str }}')">
+                                    <i class="bi bi-plus"></i>
+                                </button>
                             </div>
                         {% endif %}
                     </td>
@@ -100,33 +406,6 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
-
-<!-- Legend -->
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h6>📊 Legend</h6>
-                <div class="d-flex flex-wrap gap-3">
-                    <div><span class="badge bg-primary"></span> Tasks</div>
-                    <div><span class="badge bg-warning"></span> Habits</div>
-                    <div><span class="badge bg-success"></span> Journal</div>
-                    <div><span>😊😐😔</span> Mood</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h6>💡 Quick Tip</h6>
-                <p class="mb-0 text-muted small">
-                    Click on any day to see details and add content. Use the calendar to plan your goals and track your progress over time.
-                </p>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -189,84 +468,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.calendar-table {
-    table-layout: fixed;
-}
-
-.calendar-table th {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
-    font-weight: bold;
-    padding: 10px 5px;
-}
-
-.calendar-day {
-    height: 120px;
-    vertical-align: top;
-    padding: 8px;
-    border: 1px solid #dee2e6;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    position: relative;
-}
-
-.calendar-day:hover {
-    background-color: #f8f9fa;
-}
-
-.calendar-day.current-month {
-    background-color: white;
-}
-
-.calendar-day.other-month {
-    background-color: #f8f9fa;
-    color: #6c757d;
-}
-
-.day-number {
-    font-weight: bold;
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.day-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.tasks-indicator,
-.habits-indicator,
-.journal-indicator {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.badge {
-    font-size: 10px;
-    padding: 2px 6px;
-}
-
-.mood-indicator {
-    font-size: 12px;
-}
-
-/* Today highlight */
-.calendar-day[data-date="{{ today.isoformat() }}"] {
-    background-color: #e3f2fd !important;
-    border-color: #2196f3 !important;
-}
-
-.calendar-day[data-date="{{ today.isoformat() }}"] .day-number {
-    color: #1976d2;
-    font-weight: bold;
-}
-</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -500,9 +701,111 @@ function showToast(message, type = 'info') {
     });
 }
 
+// Handle activity clicks with improved navigation
+function handleActivityClick(event, url, activityId, activityType) {
+    // Prevent click when clicking on a task checkbox
+    if (event.target.classList.contains('cal-check') && activityType === 'task') {
+        event.stopPropagation();
+        toggleTaskFromCalendar(activityId);
+        return;
+    }
+    
+    // Navigate to the appropriate page
+    window.location.href = url;
+}
+
+// Toggle task completion directly from calendar
+async function toggleTaskFromCalendar(taskId) {
+    try {
+        const response = await fetch(`/api/calendar/task/${taskId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast(data.message, 'success');
+            
+            // Update UI immediately
+            const taskElement = document.querySelector(`[onclick*="task"][onclick*="${taskId}"]`);
+            if (taskElement) {
+                const checkElement = taskElement.querySelector('.cal-check');
+                const textElement = taskElement.querySelector('.cal-text');
+                
+                if (data.completed) {
+                    taskElement.classList.add('completed');
+                    checkElement.textContent = '✓ ';
+                    checkElement.classList.add('checked');
+                    textElement.style.textDecoration = 'line-through';
+                } else {
+                    taskElement.classList.remove('completed');
+                    checkElement.textContent = '○ ';
+                    checkElement.classList.remove('checked');
+                    textElement.style.textDecoration = 'none';
+                }
+            }
+        } else {
+            throw new Error('Failed to toggle task');
+        }
+    } catch (error) {
+        console.error('Error toggling task:', error);
+        showToast('Error updating task. Please try again.', 'error');
+    }
+}
+
+// Enhanced interaction effects
+function addCalendarEnhancements() {
+    // Add smooth animations to activity items
+    document.querySelectorAll('.activity-item').forEach(item => {
+        item.style.transition = 'all 0.2s ease-in-out';
+        
+        // Hover effects
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.filter = 'brightness(1.1)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.filter = 'brightness(1)';
+        });
+    });
+    
+    // Add pulse animation to today's cell
+    const today = document.querySelector('.calendar-day.today');
+    if (today) {
+        today.style.animation = 'pulse 2s infinite';
+    }
+}
+
+// Add CSS animations
+const calendarStyle = document.createElement('style');
+calendarStyle.textContent = `
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+    }
+    
+    .activity-item {
+        cursor: pointer;
+    }
+    
+    .activity-item.completed {
+        opacity: 0.7;
+        background: linear-gradient(45deg, #22c55e, #16a34a) !important;
+    }
+    
+    .calendar-day:hover {
+        cursor: pointer;
+    }
+`;
+document.head.appendChild(calendarStyle);
+
 // Initialize calendar interactions when page loads
 document.addEventListener('DOMContentLoaded', function() {
     enableDayClickInteraction();
+    addCalendarEnhancements();
 });
 </script>
 {% endblock %}

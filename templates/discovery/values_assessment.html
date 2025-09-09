@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+
+{% block title %}Discover Your Core Values - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .values-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .assessment-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .value-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+    
+    .value-card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+    
+    .value-card.selected {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .value-card.dimmed {
+        opacity: 0.3;
+        transform: scale(0.95);
+    }
+    
+    .phase-indicator {
+        text-align: center;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 10px;
+        border: 2px dashed #667eea;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+    
+    .selected-values {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .selected-value {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        margin: 0.25rem;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .selected-value .remove-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .reflection-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+        display: none;
+    }
+    
+    .reflection-section.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(-20px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .cta-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+    
+    .cta-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+    }
+    
+    .cta-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="values-container mt-4">
+    <div class="assessment-header">
+        <h1><i class="bi bi-heart"></i> Discover Your Core Values</h1>
+        <p class="mb-0">Values are your compass for living authentically and making decisions that align with who you truly are.</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Phase 1: Value Selection -->
+    <div id="selectionPhase" class="assessment-phase">
+        <div class="phase-indicator">
+            <h3><i class="bi bi-1-circle"></i> Choose Values That Resonate</h3>
+            <p class="mb-0">Select 15-20 values that feel important to you. Don't overthink it - go with your gut feeling.</p>
+        </div>
+
+        <div class="values-grid" id="valuesGrid">
+            {% for value in values_list %}
+            <div class="value-card" data-value="{{ value }}">
+                <strong>{{ value }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="selected-values" id="selectedValuesContainer" style="display: none;">
+            <h5><i class="bi bi-check-circle"></i> Selected Values (<span id="selectedCount">0</span>)</h5>
+            <div id="selectedValues"></div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="proceedToRanking" class="cta-button" disabled>
+                <i class="bi bi-arrow-right"></i> Proceed to Ranking
+            </button>
+        </div>
+    </div>
+
+    <!-- Phase 2: Value Ranking -->
+    <div id="rankingPhase" class="assessment-phase" style="display: none;">
+        <div class="phase-indicator">
+            <h3><i class="bi bi-2-circle"></i> Rank Your Top Values</h3>
+            <p class="mb-0">From your selected values, drag to rank your top 7 most important ones.</p>
+        </div>
+
+        <div class="selected-values">
+            <h5>Drag to Rank (Most Important First)</h5>
+            <div id="rankingList" class="sortable-list"></div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="proceedToReflection" class="cta-button" disabled>
+                <i class="bi bi-arrow-right"></i> Proceed to Reflection
+            </button>
+        </div>
+    </div>
+
+    <!-- Phase 3: Values Reflection -->
+    <div id="reflectionPhase" class="assessment-phase" style="display: none;">
+        <div class="phase-indicator">
+            <h3><i class="bi bi-3-circle"></i> Reflect on Your Values</h3>
+            <p class="mb-0">Understanding what these values mean to you personally makes them more powerful.</p>
+        </div>
+
+        <div class="reflection-section active">
+            <form id="reflectionForm">
+                <div id="valueReflections"></div>
+
+                <div class="mb-4">
+                    <label class="form-label"><strong>What insights did you gain from this process?</strong></label>
+                    <textarea name="insights_gained" class="form-control" rows="3" 
+                            placeholder="What surprised you? What confirmed what you already knew?"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label"><strong>On a scale of 1-10, how aligned is your current life with these values?</strong></label>
+                    <input type="range" name="alignment_assessment" class="form-range" min="1" max="10" value="5">
+                    <div class="d-flex justify-content-between text-muted small">
+                        <span>Not aligned (1)</span>
+                        <span>Perfectly aligned (10)</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="cta-button">
+                        <i class="bi bi-check-circle"></i> Complete Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="savingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h5>Saving Your Values Assessment...</h5>
+                <p class="text-muted mb-0">Creating your personal values profile</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedValues = [];
+let rankedValues = [];
+let currentPhase = 'selection';
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAssessment();
+});
+
+function initializeAssessment() {
+    // Add click handlers to value cards
+    document.querySelectorAll('.value-card').forEach(card => {
+        card.addEventListener('click', () => toggleValue(card));
+    });
+
+    // Phase transition buttons
+    document.getElementById('proceedToRanking').addEventListener('click', startRankingPhase);
+    document.getElementById('proceedToReflection').addEventListener('click', startReflectionPhase);
+    
+    // Form submission
+    document.getElementById('reflectionForm').addEventListener('submit', submitAssessment);
+}
+
+function toggleValue(card) {
+    const value = card.dataset.value;
+    
+    if (card.classList.contains('selected')) {
+        // Deselect
+        card.classList.remove('selected');
+        selectedValues = selectedValues.filter(v => v !== value);
+    } else {
+        // Select (with limit)
+        if (selectedValues.length >= 20) {
+            alert('Please select no more than 20 values. Remove some to add others.');
+            return;
+        }
+        card.classList.add('selected');
+        selectedValues.push(value);
+    }
+    
+    updateSelectedDisplay();
+    updateProgress();
+}
+
+function updateSelectedDisplay() {
+    const container = document.getElementById('selectedValuesContainer');
+    const valuesDiv = document.getElementById('selectedValues');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (selectedValues.length > 0) {
+        container.style.display = 'block';
+        countSpan.textContent = selectedValues.length;
+        
+        valuesDiv.innerHTML = selectedValues.map(value => `
+            <span class="selected-value">
+                ${value}
+                <button type="button" class="remove-btn" onclick="removeValue('${value}')">×</button>
+            </span>
+        `).join('');
+    } else {
+        container.style.display = 'none';
+    }
+    
+    // Update button state
+    const proceedBtn = document.getElementById('proceedToRanking');
+    proceedBtn.disabled = selectedValues.length < 10;
+}
+
+function removeValue(value) {
+    document.querySelector(`[data-value="${value}"]`).classList.remove('selected');
+    selectedValues = selectedValues.filter(v => v !== value);
+    updateSelectedDisplay();
+    updateProgress();
+}
+
+function startRankingPhase() {
+    // Hide selection phase
+    document.getElementById('selectionPhase').style.display = 'none';
+    document.getElementById('rankingPhase').style.display = 'block';
+    currentPhase = 'ranking';
+    
+    // Create draggable ranking list
+    createRankingList();
+    updateProgress();
+}
+
+function createRankingList() {
+    const rankingList = document.getElementById('rankingList');
+    rankingList.innerHTML = selectedValues.map((value, index) => `
+        <div class="ranking-item" data-value="${value}" draggable="true">
+            <div class="rank-number">${index + 1}</div>
+            <div class="value-name">${value}</div>
+            <div class="drag-handle">⋮⋮</div>
+        </div>
+    `).join('');
+    
+    // Make list sortable (simplified drag and drop)
+    new Sortable(rankingList, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: function(evt) {
+            updateRanking();
+            updateProgress();
+        }
+    });
+}
+
+function updateRanking() {
+    const items = document.querySelectorAll('.ranking-item');
+    rankedValues = Array.from(items).map((item, index) => ({
+        value: item.dataset.value,
+        rank: index + 1
+    }));
+    
+    // Update rank numbers
+    items.forEach((item, index) => {
+        item.querySelector('.rank-number').textContent = index + 1;
+    });
+    
+    // Enable proceed button if we have at least 5 ranked values
+    const proceedBtn = document.getElementById('proceedToReflection');
+    proceedBtn.disabled = rankedValues.length < 5;
+}
+
+function startReflectionPhase() {
+    document.getElementById('rankingPhase').style.display = 'none';
+    document.getElementById('reflectionPhase').style.display = 'block';
+    currentPhase = 'reflection';
+    
+    // Take top 7 values for reflection
+    const topValues = rankedValues.slice(0, 7);
+    createReflectionQuestions(topValues);
+    updateProgress();
+}
+
+function createReflectionQuestions(topValues) {
+    const container = document.getElementById('valueReflections');
+    container.innerHTML = topValues.map(item => `
+        <div class="mb-4">
+            <h5 class="text-primary">${item.value} (#${item.rank})</h5>
+            <label class="form-label">What does "${item.value}" mean to you personally?</label>
+            <textarea name="definition_${item.value}" class="form-control mb-2" rows="2" 
+                    placeholder="Define this value in your own words..."></textarea>
+            
+            <label class="form-label">How does "${item.value}" show up in your daily life?</label>
+            <textarea name="expression_${item.value}" class="form-control" rows="2" 
+                    placeholder="Give examples of how you live this value..."></textarea>
+        </div>
+    `).join('');
+}
+
+function updateProgress() {
+    let progress = 0;
+    if (currentPhase === 'selection') {
+        progress = Math.min((selectedValues.length / 15) * 33, 33);
+    } else if (currentPhase === 'ranking') {
+        progress = 33 + Math.min((rankedValues.length / 7) * 33, 33);
+    } else if (currentPhase === 'reflection') {
+        progress = 66 + 34; // Full progress in reflection phase
+    }
+    
+    document.getElementById('progressFill').style.width = progress + '%';
+}
+
+async function submitAssessment(e) {
+    e.preventDefault();
+    
+    // Show loading modal
+    const modal = new bootstrap.Modal(document.getElementById('savingModal'));
+    modal.show();
+    
+    // Prepare assessment data
+    const formData = new FormData(e.target);
+    const topValues = rankedValues.slice(0, 7);
+    
+    const assessmentData = {
+        assessment_type: 'interactive_sort',
+        top_values: topValues.map(item => ({
+            value: item.value,
+            rank: item.rank,
+            definition: formData.get(`definition_${item.value}`) || ''
+        })),
+        daily_expressions: Object.fromEntries(
+            topValues.map(item => [item.value, formData.get(`expression_${item.value}`) || ''])
+        ),
+        insights_gained: formData.get('insights_gained'),
+        alignment_assessment: parseInt(formData.get('alignment_assessment'))
+    };
+    
+    try {
+        const response = await fetch('/discovery/api/discovery/values/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(assessmentData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = result.redirect_url;
+        } else {
+            modal.hide();
+            alert('Error: ' + (result.error || 'Failed to save assessment'));
+        }
+    } catch (error) {
+        modal.hide();
+        alert('Network error. Please try again.');
+        console.error('Assessment save error:', error);
+    }
+}
+</script>
+
+<!-- Sortable.js for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<style>
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.ranking-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.rank-number {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.value-name {
+    flex-grow: 1;
+    font-weight: 500;
+}
+
+.drag-handle {
+    color: #9ca3af;
+    font-size: 1.2rem;
+}
+
+.sortable-ghost {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+</style>
+{% endblock %}

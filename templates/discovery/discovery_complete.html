@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery Complete - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .completion-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .celebration-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .celebration-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+    }
+    
+    .values-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        margin: 1rem 0;
+    }
+    
+    .value-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 500;
+        position: relative;
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .value-rank {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #fbbf24;
+        color: #92400e;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .vision-quote {
+        background: rgba(102, 126, 234, 0.1);
+        border-left: 4px solid #667eea;
+        padding: 2rem;
+        border-radius: 0 15px 15px 0;
+        font-style: italic;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin: 2rem 0;
+    }
+    
+    .next-steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .next-step-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        transition: transform 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .next-step-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .step-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .warning-card {
+        background: #fff3cd;
+        border: 1px solid #ffd93d;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .celebration-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .cta-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: transform 0.2s;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="completion-container mt-4">
+    <!-- Celebration Header -->
+    <div class="celebration-header">
+        <h1>🎉 Discovery Complete!</h1>
+        <p class="lead mb-4">You've unlocked the foundation of purposeful living</p>
+        
+        <div class="celebration-stats">
+            <div class="stat-card">
+                <span class="stat-number">{{ values_assessment.get_top_value_names()|length }}</span>
+                <small>Core Values Discovered</small>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">1</span>
+                <small>Life Vision Created</small>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ vision_statement.confidence_level or 'N/A' }}</span>
+                <small>Confidence Level</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Core Values -->
+    <div class="summary-card">
+        <h3><i class="bi bi-heart-fill text-danger"></i> Your Core Values</h3>
+        <p class="text-muted">These values represent what matters most to you and should guide your decisions:</p>
+        
+        <div class="values-display">
+            {% for value_data in values_assessment.top_values %}
+                <div class="value-card">
+                    {{ value_data.value }}
+                    <div class="value-rank">{{ value_data.rank }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-3">
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i> 
+                Numbers show your personal ranking (1 = most important)
+            </small>
+        </div>
+    </div>
+
+    <!-- Your Vision Statement -->
+    <div class="summary-card">
+        <h3><i class="bi bi-eye-fill text-primary"></i> Your Life Vision</h3>
+        <div class="vision-quote">
+            "{{ vision_statement.vision_statement }}"
+        </div>
+        
+        {% if vision_statement.mission_statement %}
+        <div class="mt-4">
+            <h5>Your Mission:</h5>
+            <p class="text-muted">{{ vision_statement.mission_statement }}</p>
+        </div>
+        {% endif %}
+        
+        {% if vision_statement.legacy_intention %}
+        <div class="mt-4">
+            <h5>Your Intended Legacy:</h5>
+            <p class="text-muted">{{ vision_statement.legacy_intention }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Orphaned Tasks Warning -->
+    {% if orphaned_tasks_count > 0 %}
+    <div class="warning-card">
+        <h5><i class="bi bi-exclamation-triangle text-warning"></i> Tasks Need Your Attention</h5>
+        <p class="mb-2">You have <strong>{{ orphaned_tasks_count }} tasks</strong> that aren't connected to any goals. Let's align them with your newly discovered purpose!</p>
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-warning btn-sm">
+            <i class="bi bi-link-45deg"></i> Connect Your Tasks
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Next Steps -->
+    <div class="summary-card">
+        <h3><i class="bi bi-arrow-right-circle"></i> Your Next Steps</h3>
+        <p class="text-muted mb-4">Now that you know who you are and where you're going, let's create the path to get there:</p>
+        
+        <div class="next-steps-grid">
+            <a href="{{ url_for('goals.goals_list') }}" class="next-step-card">
+                <div class="step-icon">
+                    <i class="bi bi-target"></i>
+                </div>
+                <h5>Align Your Goals</h5>
+                <p class="text-muted mb-0">Connect your existing goals to your values or create new ones that support your vision.</p>
+            </a>
+            
+            {% if orphaned_tasks_count > 0 %}
+            <a href="{{ url_for('dashboard.dashboard') }}" class="next-step-card">
+                <div class="step-icon">
+                    <i class="bi bi-link-45deg"></i>
+                </div>
+                <h5>Connect Tasks</h5>
+                <p class="text-muted mb-0">Link your {{ orphaned_tasks_count }} unconnected tasks to goals that matter.</p>
+            </a>
+            {% endif %}
+            
+            <a href="{{ url_for('chat.chat_interface') }}" class="next-step-card">
+                <div class="step-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <h5>Get AI Coaching</h5>
+                <p class="text-muted mb-0">Discuss your discovery with your AI coach and get personalized guidance.</p>
+            </a>
+            
+            <a href="{{ url_for('journal.journal') }}" class="next-step-card">
+                <div class="step-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <h5>Reflect & Journal</h5>
+                <p class="text-muted mb-0">Document your insights and track how you're living aligned with your values.</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Inspirational Closing -->
+    <div class="summary-card text-center">
+        <h4>🌟 You're Ready for Purposeful Living</h4>
+        <p class="lead text-muted mb-4">
+            "The purpose of life is not to be happy. It is to be useful, to be honorable, to be compassionate, 
+            to have it make some difference that you have lived and lived well." — Ralph Waldo Emerson
+        </p>
+        
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('goals.goals_list') }}" class="cta-button">
+                <i class="bi bi-arrow-right"></i> Start Planning Your Goals
+            </a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="cta-button" style="background: transparent; color: #667eea; border: 2px solid #667eea;">
+                <i class="bi bi-house-heart"></i> Go to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some celebratory animation
+    const cards = document.querySelectorAll('.summary-card, .next-step-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 150);
+    });
+    
+    // Confetti effect (simple version)
+    setTimeout(() => {
+        for(let i = 0; i < 50; i++) {
+            createConfetti();
+        }
+    }, 1000);
+});
+
+function createConfetti() {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'fixed';
+    confetti.style.width = '10px';
+    confetti.style.height = '10px';
+    confetti.style.background = ['#667eea', '#764ba2', '#fbbf24', '#10b981'][Math.floor(Math.random() * 4)];
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+    confetti.style.animationName = 'fall';
+    confetti.style.zIndex = '9999';
+    confetti.style.pointerEvents = 'none';
+    
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => {
+        confetti.remove();
+    }, 5000);
+}
+
+// CSS for confetti animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fall {
+        to {
+            transform: translateY(100vh) rotate(360deg);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

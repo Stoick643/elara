@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from models import db, Task, JournalEntry, Goal, Habit, Value
 from sqlalchemy import desc, func
 from routes.avatar import get_personality_message_for_context
+from services.ai_coach import AICoach
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -145,6 +146,18 @@ def dashboard():
             'priority': value.priority
         }
     
+    # ===== PHASE 3 FEATURES: Discovery & Alignment =====
+    
+    # Get discovery progress
+    discovery_progress = current_user.get_discovery_progress()
+    
+    # Get orphaned tasks (tasks not connected to goals)
+    orphaned_tasks = current_user.get_orphaned_tasks()[:10]  # Limit to 10 for UI
+    orphaned_count = current_user.get_orphaned_tasks_count()
+    
+    # Show discovery prompt if not completed
+    show_discovery_prompt = not discovery_progress['overall_complete']
+    
     return render_template('dashboard/dashboard.html',
                          # Existing data
                          todays_tasks=todays_tasks,
@@ -161,7 +174,13 @@ def dashboard():
                          personality_message=personality_message,
                          upcoming_deadlines=upcoming_deadlines,
                          life_balance=life_balance,
-                         today=today)
+                         today=today,
+                         
+                         # Phase 3: Discovery & Alignment
+                         discovery_progress=discovery_progress,
+                         orphaned_tasks=orphaned_tasks,
+                         orphaned_count=orphaned_count,
+                         show_discovery_prompt=show_discovery_prompt)
 
 @dashboard_bp.route('/api/complete-task/<int:task_id>', methods=['POST'])
 @login_required
@@ -293,3 +312,134 @@ def get_dashboard_stats():
             'this_week': this_week_entries
         }
     })
+
+
+# ===== PHASE 3: ORPHANED TASKS & CONNECTION SYSTEM =====
+
+@dashboard_bp.route('/api/orphaned-tasks')
+@login_required
+def get_orphaned_tasks():
+    """Get all orphaned tasks for the user."""
+    orphaned_tasks = current_user.get_orphaned_tasks()
+    return jsonify({
+        'success': True,
+        'tasks': [{
+            'id': task.id,
+            'title': task.title,
+            'description': task.description,
+            'energy_required': task.energy_required,
+            'energy_icon': task.get_energy_icon(),
+            'due_date': task.due_date.isoformat() if task.due_date else None,
+            'created_at': task.created_at.isoformat()
+        } for task in orphaned_tasks]
+    })
+
+
+@dashboard_bp.route('/api/connect-task-to-goal', methods=['POST'])
+@login_required
+def connect_task_to_goal():
+    """Connect an orphaned task to an existing goal."""
+    data = request.get_json()
+    task_id = data.get('task_id')
+    goal_id = data.get('goal_id')
+    
+    if not task_id or not goal_id:
+        return jsonify({'success': False, 'message': 'Task ID and Goal ID required'}), 400
+    
+    # Verify task belongs to user and is orphaned
+    task = Task.query.filter_by(id=task_id, user_id=current_user.id, goal_id=None).first()
+    if not task:
+        return jsonify({'success': False, 'message': 'Task not found or already connected'}), 404
+    
+    # Verify goal belongs to user
+    goal = Goal.query.filter_by(id=goal_id, user_id=current_user.id).first()
+    if not goal:
+        return jsonify({'success': False, 'message': 'Goal not found'}), 404
+    
+    # Connect task to goal
+    task.goal_id = goal_id
+    db.session.commit()
+    
+    # Recalculate goal progress
+    goal.calculate_progress()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Task "{task.title}" connected to goal "{goal.title}"',
+        'new_goal_progress': goal.progress
+    })
+
+
+@dashboard_bp.route('/api/create-goal-from-tasks', methods=['POST'])
+@login_required
+def create_goal_from_tasks():
+    """Create a new goal and connect selected orphaned tasks to it."""
+    data = request.get_json()
+    goal_title = data.get('goal_title', '').strip()
+    task_ids = data.get('task_ids', [])
+    value_id = data.get('value_id')  # Optional values connection
+    
+    if not goal_title:
+        return jsonify({'success': False, 'message': 'Goal title is required'}), 400
+    
+    if not task_ids:
+        return jsonify({'success': False, 'message': 'At least one task must be selected'}), 400
+    
+    # Verify all tasks belong to user and are orphaned
+    tasks = Task.query.filter(
+        Task.id.in_(task_ids),
+        Task.user_id == current_user.id,
+        Task.goal_id == None
+    ).all()
+    
+    if len(tasks) != len(task_ids):
+        return jsonify({'success': False, 'message': 'Some tasks not found or already connected'}), 400
+    
+    # Create new goal
+    goal = Goal(
+        user_id=current_user.id,
+        title=goal_title,
+        value_id=value_id,
+        description=f"Goal created from {len(tasks)} related tasks"
+    )
+    db.session.add(goal)
+    db.session.flush()  # Get goal ID
+    
+    # Connect tasks to new goal
+    for task in tasks:
+        task.goal_id = goal.id
+    
+    db.session.commit()
+    
+    # Calculate initial progress
+    goal.calculate_progress()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Goal "{goal_title}" created with {len(tasks)} connected tasks',
+        'goal_id': goal.id,
+        'goal_progress': goal.progress
+    })
+
+
+@dashboard_bp.route('/api/ai-task-suggestions')
+@login_required
+def get_ai_task_suggestions():
+    """Get AI suggestions for connecting orphaned tasks."""
+    try:
+        ai_coach = AICoach()
+        suggestions = ai_coach.suggest_task_goal_connections(current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'Unable to generate AI suggestions',
+            'error': str(e)
+        }), 500

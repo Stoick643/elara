@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ task.title }} - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-task-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-content {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .energy-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 0.5rem;
+    }
+    
+    .energy-option:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .energy-option input[type="radio"] {
+        margin: 0;
+    }
+    
+    .energy-option input[type="radio"]:checked + .energy-content {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .energy-option.checked {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .energy-content {
+        flex-grow: 1;
+    }
+    
+    .energy-icon {
+        font-size: 1.2rem;
+    }
+    
+    .energy-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    .goal-preview {
+        background: rgba(102, 126, 234, 0.05);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+    
+    .goal-preview.show {
+        display: block;
+    }
+    
+    .required {
+        color: #ef4444;
+    }
+    
+    .current-status {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-completed {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+    }
+    
+    .status-pending {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+    }
+    
+    .status-overdue {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tasks.task_list') }}">
+                <i class="bi bi-list-task"></i> Tasks
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">{{ task.title }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
+</nav>
+
+<!-- Edit Task Card -->
+<div class="edit-task-card">
+    <!-- Header -->
+    <div class="form-header">
+        <h1><i class="bi bi-pencil"></i> Edit Task</h1>
+        <p class="lead mb-0">Update your task details</p>
+    </div>
+    
+    <!-- Form Content -->
+    <div class="form-content">
+        <!-- Current Status -->
+        <div class="current-status">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Current Status:</strong>
+                    <div class="status-badge 
+                        {% if task.completed %}status-completed
+                        {% elif task.due_date and task.due_date < date.today() %}status-overdue
+                        {% else %}status-pending{% endif %} mt-2">
+                        {% if task.completed %}
+                            <i class="bi bi-check-circle"></i> Completed
+                        {% elif task.due_date and task.due_date < date.today() %}
+                            <i class="bi bi-exclamation-circle"></i> Overdue
+                        {% else %}
+                            <i class="bi bi-circle"></i> Pending
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button class="btn btn-outline-primary" onclick="toggleTask({{ task.id }})">
+                        {% if task.completed %}
+                            <i class="bi bi-x-circle"></i> Mark Incomplete
+                        {% else %}
+                            <i class="bi bi-check-circle"></i> Mark Complete
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <form method="POST" id="editTaskForm">
+            <!-- Task Title -->
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    Task Title <span class="required">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="title" 
+                       name="title" 
+                       value="{{ task.title }}"
+                       placeholder="What needs to be done?"
+                       required
+                       autofocus>
+                <div class="form-text">Be specific and actionable</div>
+            </div>
+            
+            <!-- Task Description -->
+            <div class="form-group">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" 
+                          id="description" 
+                          name="description" 
+                          rows="4"
+                          placeholder="Add any additional details, notes, or context...">{{ task.description or '' }}</textarea>
+                <div class="form-text">Optional: Add context, steps, or any important details</div>
+            </div>
+            
+            <!-- Due Date -->
+            <div class="form-group">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="due_date" 
+                       name="due_date"
+                       value="{{ task.due_date.isoformat() if task.due_date else '' }}">
+                <div class="form-text">Optional: When does this task need to be completed?</div>
+            </div>
+            
+            <!-- Energy Required -->
+            <div class="form-group">
+                <label class="form-label">Energy Required</label>
+                <div class="energy-options">
+                    <label class="energy-option {{ 'checked' if task.energy_required == 'low' else '' }}" for="energy_low">
+                        <input type="radio" id="energy_low" name="energy_required" value="low" 
+                               {{ 'checked' if task.energy_required == 'low' else '' }}>
+                        <div class="energy-content">
+                            <div class="energy-icon">🟢</div>
+                            <strong>Low Energy</strong>
+                            <div class="energy-description">Quick tasks, routine work, simple activities</div>
+                        </div>
+                    </label>
+                    
+                    <label class="energy-option {{ 'checked' if task.energy_required == 'medium' else '' }}" for="energy_medium">
+                        <input type="radio" id="energy_medium" name="energy_required" value="medium"
+                               {{ 'checked' if task.energy_required == 'medium' else '' }}>
+                        <div class="energy-content">
+                            <div class="energy-icon">🟡</div>
+                            <strong>Medium Energy</strong>
+                            <div class="energy-description">Regular tasks, moderate focus required</div>
+                        </div>
+                    </label>
+                    
+                    <label class="energy-option {{ 'checked' if task.energy_required == 'high' else '' }}" for="energy_high">
+                        <input type="radio" id="energy_high" name="energy_required" value="high"
+                               {{ 'checked' if task.energy_required == 'high' else '' }}>
+                        <div class="energy-content">
+                            <div class="energy-icon">🔴</div>
+                            <strong>High Energy</strong>
+                            <div class="energy-description">Complex work, deep focus, creative tasks</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Goal Connection -->
+            <div class="form-group">
+                <label for="goal_id" class="form-label">Connect to Goal</label>
+                <select class="form-select" id="goal_id" name="goal_id" onchange="showGoalPreview()">
+                    <option value="">None - Standalone Task</option>
+                    {% for goal in goals %}
+                    <option value="{{ goal.id }}" 
+                            {{ 'selected' if task.goal_id == goal.id else '' }}
+                            data-title="{{ goal.title }}" 
+                            data-progress="{{ goal.progress }}"
+                            data-description="{{ goal.description or '' }}">
+                        {{ goal.title }} ({{ goal.progress }}% complete)
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Optional: Link this task to one of your strategic goals</div>
+                
+                <div id="goalPreview" class="goal-preview {{ 'show' if task.goal else '' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong id="previewTitle">{{ task.goal.title if task.goal else 'Goal Title' }}</strong>
+                        <span class="badge bg-primary" id="previewProgress">{{ task.goal.progress if task.goal else '0' }}% complete</span>
+                    </div>
+                    <div id="previewDescription" class="text-muted">{{ task.goal.description if task.goal and task.goal.description else 'No description available' }}</div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
+                
+                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                
+                <button type="button" class="btn btn-outline-danger" onclick="deleteTask({{ task.id }}, '{{ task.title }}')">
+                    <i class="bi bi-trash"></i> Delete Task
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Handle energy option selection
+document.querySelectorAll('.energy-option input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Remove checked class from all options
+        document.querySelectorAll('.energy-option').forEach(option => {
+            option.classList.remove('checked');
+        });
+        
+        // Add checked class to selected option
+        if (this.checked) {
+            this.closest('.energy-option').classList.add('checked');
+        }
+    });
+});
+
+// Show goal preview
+function showGoalPreview() {
+    const select = document.getElementById('goal_id');
+    const preview = document.getElementById('goalPreview');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        document.getElementById('previewTitle').textContent = selectedOption.dataset.title;
+        document.getElementById('previewProgress').textContent = selectedOption.dataset.progress + '% complete';
+        document.getElementById('previewDescription').textContent = selectedOption.dataset.description || 'No description available';
+        preview.classList.add('show');
+    } else {
+        preview.classList.remove('show');
+    }
+}
+
+// Toggle task completion
+async function toggleTask(taskId) {
+    try {
+        const response = await fetch(`/tasks/api/tasks/${taskId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast(data.message, 'success');
+            
+            // Reload to show updated task state
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            throw new Error('Failed to toggle task');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error updating task. Please try again.', 'error');
+    }
+}
+
+// Delete task confirmation
+function deleteTask(taskId, taskTitle) {
+    if (confirm(`Are you sure you want to delete "${taskTitle}"?\n\nThis action cannot be undone.`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/tasks/tasks/${taskId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Form validation
+document.getElementById('editTaskForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    
+    if (!title) {
+        e.preventDefault();
+        alert('Please enter a task title.');
+        document.getElementById('title').focus();
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after a delay in case there's an error
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(container.lastElementChild);
+    toast.show();
+    
+    container.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+</script>
+{% endblock %}

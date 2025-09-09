@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Discover Yourself - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .discovery-progress {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-step {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .progress-step.completed {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 4px solid #22c55e;
+    }
+    
+    .progress-step.current {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        transform: scale(1.02);
+    }
+    
+    .progress-step.pending {
+        background: rgba(156, 163, 175, 0.1);
+        border-left: 4px solid #9ca3af;
+    }
+    
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .step-icon.completed { background: #22c55e; color: white; }
+    .step-icon.current { background: #3b82f6; color: white; }
+    .step-icon.pending { background: #e5e7eb; color: #6b7280; }
+    
+    .discovery-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .values-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .value-tag {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .cta-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: transform 0.2s;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .quote-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-left: 4px solid #667eea;
+        padding: 1.5rem;
+        border-radius: 0 10px 10px 0;
+        margin: 1.5rem 0;
+        font-style: italic;
+        color: #4a5568;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Discovery Progress Header -->
+    <div class="discovery-progress">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-compass"></i> Discover Your Purpose
+                </h1>
+                <p class="mb-0 opacity-90">
+                    Build a life aligned with your deepest values and clearest vision
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if progress.overall_complete %}
+                    <div class="h2 mb-0">✨ Complete!</div>
+                {% else %}
+                    <div class="h2 mb-0">
+                        {% set completed_steps = (progress.values_assessment|int + progress.vision_statement|int) %}
+                        {{ completed_steps }}/2 Steps
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Progress Steps -->
+            <div class="discovery-card">
+                <h3 class="mb-4">Your Discovery Journey</h3>
+                
+                <!-- Step 1: Values Assessment -->
+                <div class="progress-step {{ 'completed' if progress.values_assessment else 'current' if not progress.values_assessment else 'pending' }}">
+                    <div class="step-icon {{ 'completed' if progress.values_assessment else 'current' if not progress.values_assessment else 'pending' }}">
+                        {% if progress.values_assessment %}
+                            <i class="bi bi-check-lg"></i>
+                        {% else %}
+                            <i class="bi bi-heart"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">Discover Your Core Values</h5>
+                        <p class="mb-0 text-muted">
+                            {% if progress.values_assessment %}
+                                ✓ Completed - Your top values have been identified
+                            {% else %}
+                                Identify what matters most to you through guided assessment
+                            {% endif %}
+                        </p>
+                        {% if not progress.values_assessment %}
+                            <a href="{{ url_for('discovery.values_assessment') }}" class="btn btn-primary btn-sm mt-2">
+                                <i class="bi bi-play-fill"></i> Start Values Assessment
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Step 2: Vision Creation -->
+                <div class="progress-step {{ 'completed' if progress.vision_statement else 'current' if progress.values_assessment and not progress.vision_statement else 'pending' }}">
+                    <div class="step-icon {{ 'completed' if progress.vision_statement else 'current' if progress.values_assessment and not progress.vision_statement else 'pending' }}">
+                        {% if progress.vision_statement %}
+                            <i class="bi bi-check-lg"></i>
+                        {% else %}
+                            <i class="bi bi-eye"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">Create Your Life Vision</h5>
+                        <p class="mb-0 text-muted">
+                            {% if progress.vision_statement %}
+                                ✓ Completed - Your life vision is clear and inspiring
+                            {% elif progress.values_assessment %}
+                                Define your ideal future based on your discovered values
+                            {% else %}
+                                Complete values assessment first to unlock vision creation
+                            {% endif %}
+                        </p>
+                        {% if progress.values_assessment and not progress.vision_statement %}
+                            <a href="{{ url_for('discovery.vision_builder') }}" class="btn btn-primary btn-sm mt-2">
+                                <i class="bi bi-play-fill"></i> Create Your Vision
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if progress.overall_complete %}
+                <!-- Step 3: Alignment (shown after completion) -->
+                <div class="progress-step {{ 'current' if not progress.goals_aligned else 'completed' }}">
+                    <div class="step-icon {{ 'current' if not progress.goals_aligned else 'completed' }}">
+                        {% if progress.goals_aligned %}
+                            <i class="bi bi-check-lg"></i>
+                        {% else %}
+                            <i class="bi bi-target"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">Align Your Goals</h5>
+                        <p class="mb-0 text-muted">
+                            {% if progress.goals_aligned %}
+                                ✓ Your goals are connected to your values
+                            {% else %}
+                                Connect your existing goals to your discovered values
+                            {% endif %}
+                        </p>
+                        {% if not progress.goals_aligned %}
+                            <a href="{{ url_for('goals.goals_list') }}" class="btn btn-primary btn-sm mt-2">
+                                <i class="bi bi-arrow-right"></i> Review Goals
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Values Preview -->
+            {% if current_assessment %}
+            <div class="discovery-card">
+                <h4><i class="bi bi-heart-fill text-danger"></i> Your Core Values</h4>
+                <div class="values-preview">
+                    {% for value in current_assessment.get_top_value_names()[:5] %}
+                        <span class="value-tag">{{ value }}</span>
+                    {% endfor %}
+                </div>
+                <p class="text-muted mt-2 mb-0">
+                    <small>Discovered {{ current_assessment.completed_at.strftime('%B %d, %Y') }}</small>
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Vision Preview -->
+            {% if current_vision %}
+            <div class="discovery-card">
+                <h4><i class="bi bi-eye-fill text-primary"></i> Your Vision</h4>
+                <blockquote class="mb-3">
+                    "{{ current_vision.vision_statement[:150] }}{% if current_vision.vision_statement|length > 150 %}...{% endif %}"
+                </blockquote>
+                <p class="text-muted mb-0">
+                    <small>Created {{ current_vision.created_at.strftime('%B %d, %Y') }}</small>
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Inspirational Quote -->
+            <div class="quote-card">
+                <p class="mb-2">"The two most important days in your life are the day you are born and the day you find out why."</p>
+                <small>— Mark Twain</small>
+            </div>
+
+            <!-- Next Steps CTA -->
+            {% if progress.overall_complete %}
+                <div class="discovery-card text-center">
+                    <h5>🎯 Ready for Strategic Planning?</h5>
+                    <p class="text-muted">Transform your vision into actionable goals</p>
+                    <a href="{{ url_for('goals.goals_list') }}" class="cta-button">
+                        <i class="bi bi-arrow-right-circle"></i> Plan Your Goals
+                    </a>
+                </div>
+            {% else %}
+                <div class="discovery-card text-center">
+                    <h5>💫 Why Discovery Matters</h5>
+                    <p class="text-muted">Without knowing your values and vision, you're just busy - not purposeful. Complete your discovery to transform how you live.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactive animations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate progress steps on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = Math.random() * 0.3 + 's';
+                    entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+                }
+            });
+        });
+
+        document.querySelectorAll('.progress-step').forEach(step => {
+            observer.observe(step);
+        });
+    });
+</script>
+{% endblock %}

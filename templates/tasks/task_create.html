@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-task-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-content {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .energy-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 0.5rem;
+    }
+    
+    .energy-option:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .energy-option input[type="radio"] {
+        margin: 0;
+    }
+    
+    .energy-option input[type="radio"]:checked + .energy-content {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .energy-option.checked {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .energy-content {
+        flex-grow: 1;
+    }
+    
+    .energy-icon {
+        font-size: 1.2rem;
+    }
+    
+    .energy-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    .goal-preview {
+        background: rgba(102, 126, 234, 0.05);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+    
+    .goal-preview.show {
+        display: block;
+    }
+    
+    .required {
+        color: #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tasks.task_list') }}">
+                <i class="bi bi-list-task"></i> Tasks
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Create New Task</li>
+    </ol>
+</nav>
+
+<!-- Create Task Card -->
+<div class="create-task-card">
+    <!-- Header -->
+    <div class="form-header">
+        <h1><i class="bi bi-plus-circle"></i> Create New Task</h1>
+        <p class="lead mb-0">Add a new task to stay organized and productive</p>
+    </div>
+    
+    <!-- Form Content -->
+    <div class="form-content">
+        <form method="POST" id="createTaskForm">
+            <!-- Task Title -->
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    Task Title <span class="required">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="title" 
+                       name="title" 
+                       placeholder="What needs to be done?"
+                       required
+                       autofocus>
+                <div class="form-text">Be specific and actionable (e.g., "Write project proposal" instead of "Work on project")</div>
+            </div>
+            
+            <!-- Task Description -->
+            <div class="form-group">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" 
+                          id="description" 
+                          name="description" 
+                          rows="4"
+                          placeholder="Add any additional details, notes, or context..."></textarea>
+                <div class="form-text">Optional: Add context, steps, or any important details</div>
+            </div>
+            
+            <!-- Due Date -->
+            <div class="form-group">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="due_date" 
+                       name="due_date"
+                       value="{{ default_due_date }}"
+                       min="{{ date.today().isoformat() }}">
+                <div class="form-text">Optional: When does this task need to be completed?</div>
+            </div>
+            
+            <!-- Energy Required -->
+            <div class="form-group">
+                <label class="form-label">Energy Required</label>
+                <div class="energy-options">
+                    <label class="energy-option" for="energy_low">
+                        <input type="radio" id="energy_low" name="energy_required" value="low">
+                        <div class="energy-content">
+                            <div class="energy-icon">🟢</div>
+                            <strong>Low Energy</strong>
+                            <div class="energy-description">Quick tasks, routine work, simple activities</div>
+                        </div>
+                    </label>
+                    
+                    <label class="energy-option checked" for="energy_medium">
+                        <input type="radio" id="energy_medium" name="energy_required" value="medium" checked>
+                        <div class="energy-content">
+                            <div class="energy-icon">🟡</div>
+                            <strong>Medium Energy</strong>
+                            <div class="energy-description">Regular tasks, moderate focus required</div>
+                        </div>
+                    </label>
+                    
+                    <label class="energy-option" for="energy_high">
+                        <input type="radio" id="energy_high" name="energy_required" value="high">
+                        <div class="energy-content">
+                            <div class="energy-icon">🔴</div>
+                            <strong>High Energy</strong>
+                            <div class="energy-description">Complex work, deep focus, creative tasks</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Goal Connection -->
+            <div class="form-group">
+                <label for="goal_id" class="form-label">Connect to Goal</label>
+                <select class="form-select" id="goal_id" name="goal_id" onchange="showGoalPreview()">
+                    <option value="">None - Standalone Task</option>
+                    {% for goal in goals %}
+                    <option value="{{ goal.id }}" 
+                            data-title="{{ goal.title }}" 
+                            data-progress="{{ goal.progress }}"
+                            data-description="{{ goal.description or '' }}">
+                        {{ goal.title }} ({{ goal.progress }}% complete)
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Optional: Link this task to one of your strategic goals</div>
+                
+                <div id="goalPreview" class="goal-preview">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong id="previewTitle">Goal Title</strong>
+                        <span class="badge bg-primary" id="previewProgress">0% complete</span>
+                    </div>
+                    <div id="previewDescription" class="text-muted"></div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle"></i> Create Task
+                </button>
+                
+                <a href="{{ url_for('tasks.task_list') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                
+                <button type="button" class="btn btn-outline-primary" onclick="createAndContinue()">
+                    <i class="bi bi-plus"></i> Create & Add Another
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Handle energy option selection
+document.querySelectorAll('.energy-option input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Remove checked class from all options
+        document.querySelectorAll('.energy-option').forEach(option => {
+            option.classList.remove('checked');
+        });
+        
+        // Add checked class to selected option
+        if (this.checked) {
+            this.closest('.energy-option').classList.add('checked');
+        }
+    });
+});
+
+// Show goal preview
+function showGoalPreview() {
+    const select = document.getElementById('goal_id');
+    const preview = document.getElementById('goalPreview');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        document.getElementById('previewTitle').textContent = selectedOption.dataset.title;
+        document.getElementById('previewProgress').textContent = selectedOption.dataset.progress + '% complete';
+        document.getElementById('previewDescription').textContent = selectedOption.dataset.description || 'No description available';
+        preview.classList.add('show');
+    } else {
+        preview.classList.remove('show');
+    }
+}
+
+// Create and continue functionality
+function createAndContinue() {
+    // Set a flag to know we want to continue
+    const form = document.getElementById('createTaskForm');
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'continue';
+    input.value = 'true';
+    form.appendChild(input);
+    
+    form.submit();
+}
+
+// Auto-focus on title and select all if coming back from continue
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('title');
+    if (titleInput) {
+        titleInput.focus();
+        
+        // If we have URL param indicating we just created a task, clear the form
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('continue') === 'true') {
+            // Clear form except for due date and goal if they were set
+            titleInput.value = '';
+            document.getElementById('description').value = '';
+            titleInput.focus();
+        }
+    }
+});
+
+// Form validation
+document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    
+    if (!title) {
+        e.preventDefault();
+        alert('Please enter a task title.');
+        document.getElementById('title').focus();
+        return false;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after a delay in case there's an error
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+</script>
+{% endblock %}

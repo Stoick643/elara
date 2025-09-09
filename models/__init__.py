@@ -23,6 +23,10 @@ class User(UserMixin, db.Model):
     goals = db.relationship('Goal', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     habits = db.relationship('Habit', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
+    # Level A: Vision and Values Discovery
+    vision_statements = db.relationship('VisionStatement', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    value_assessments = db.relationship('CoreValueAssessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    
     def set_password(self, password):
         """Hash and set the user's password."""
         self.password_hash = generate_password_hash(password)
@@ -30,6 +34,37 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         """Check if provided password matches the hash."""
         return check_password_hash(self.password_hash, password)
+    
+    def get_current_vision(self):
+        """Get user's current active vision statement."""
+        return self.vision_statements.filter_by(is_current=True).first()
+    
+    def get_current_values_assessment(self):
+        """Get user's current values assessment."""
+        return self.value_assessments.filter_by(is_current=True).first()
+    
+    def has_completed_discovery(self):
+        """Check if user has completed both values and vision discovery."""
+        has_values = self.get_current_values_assessment() is not None
+        has_vision = self.get_current_vision() is not None
+        return has_values and has_vision
+    
+    def get_discovery_progress(self):
+        """Return discovery completion status for onboarding."""
+        return {
+            'values_assessment': self.get_current_values_assessment() is not None,
+            'vision_statement': self.get_current_vision() is not None,
+            'goals_aligned': self.goals.filter(Goal.value_id.isnot(None)).count() > 0,
+            'overall_complete': self.has_completed_discovery()
+        }
+    
+    def get_orphaned_tasks(self):
+        """Get tasks not connected to any goal."""
+        return self.tasks.filter_by(goal_id=None, completed=False).all()
+    
+    def get_orphaned_tasks_count(self):
+        """Count of tasks not connected to goals."""
+        return self.tasks.filter_by(goal_id=None, completed=False).count()
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -407,3 +442,124 @@ class Insight(db.Model):
     
     def __repr__(self):
         return f'<Insight {self.insight_type} - {self.title}>'
+
+
+class VisionStatement(db.Model):
+    """User's life vision and mission statement."""
+    __tablename__ = 'vision_statements'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Vision components
+    vision_statement = db.Column(db.Text, nullable=False)  # "I see myself as..."
+    mission_statement = db.Column(db.Text, nullable=True)  # "My purpose is to..."
+    core_purpose = db.Column(db.Text, nullable=True)  # Why do you exist?
+    legacy_intention = db.Column(db.Text, nullable=True)  # What do you want to be remembered for?
+    
+    # Reflection prompts responses
+    life_themes = db.Column(db.JSON, nullable=True)  # Key themes that matter
+    peak_experiences = db.Column(db.Text, nullable=True)  # When did you feel most alive?
+    future_self_visualization = db.Column(db.Text, nullable=True)  # 10-year vision
+    
+    # Status and versioning
+    version = db.Column(db.Integer, default=1)  # Allow vision evolution
+    is_current = db.Column(db.Boolean, default=True)  # Current active vision
+    confidence_level = db.Column(db.Integer, nullable=True)  # 1-10 how sure are you
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_reviewed = db.Column(db.DateTime, nullable=True)
+    
+    def mark_for_review(self):
+        """Schedule vision for review (recommended every 6-12 months)."""
+        from datetime import timedelta
+        self.last_reviewed = datetime.utcnow()
+        # Could set next_review_date = last_reviewed + 6 months
+    
+    def create_new_version(self):
+        """Create a new version of the vision, archiving the current one."""
+        self.is_current = False
+        db.session.commit()
+        # Caller should create new VisionStatement with version += 1
+    
+    def __repr__(self):
+        return f'<VisionStatement v{self.version} - User {self.user_id}>'
+
+
+class CoreValueAssessment(db.Model):
+    """Values discovery assessment results and rankings."""
+    __tablename__ = 'core_value_assessments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Assessment methodology
+    assessment_type = db.Column(db.String(50), default='card_sort')  # 'card_sort', 'ranking', 'story_based'
+    
+    # Core values (top 5-7 most important)
+    top_values = db.Column(db.JSON, nullable=False)  # [{"value": "Freedom", "rank": 1, "definition": "..."}, ...]
+    
+    # Values exploration responses
+    values_definition = db.Column(db.JSON, nullable=True)  # User's definition of each value
+    values_stories = db.Column(db.JSON, nullable=True)  # Stories of when values were honored/violated
+    conflicting_values = db.Column(db.JSON, nullable=True)  # Values that sometimes conflict
+    
+    # Values in action
+    daily_expressions = db.Column(db.JSON, nullable=True)  # How values show up daily
+    decision_framework = db.Column(db.Text, nullable=True)  # How to use values for decisions
+    
+    # Meta-reflection
+    insights_gained = db.Column(db.Text, nullable=True)  # What did you learn?
+    surprises = db.Column(db.Text, nullable=True)  # What was unexpected?
+    alignment_assessment = db.Column(db.Integer, nullable=True)  # 1-10 how aligned is current life
+    
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_current = db.Column(db.Boolean, default=True)
+    
+    def get_top_value_names(self):
+        """Return list of top value names in rank order."""
+        if not self.top_values:
+            return []
+        sorted_values = sorted(self.top_values, key=lambda x: x.get('rank', 999))
+        return [v['value'] for v in sorted_values]
+    
+    def get_value_definition(self, value_name):
+        """Get user's definition of a specific value."""
+        if not self.top_values:
+            return None
+        for value_data in self.top_values:
+            if value_data['value'] == value_name:
+                return value_data.get('definition', '')
+        return None
+    
+    def create_values_records(self):
+        """Create/update Value records based on assessment results."""
+        if not self.top_values:
+            return
+        
+        # Create or update Value records for top values
+        for i, value_data in enumerate(self.top_values, 1):
+            # Check if Value record exists
+            existing_value = Value.query.filter_by(
+                user_id=self.user_id,
+                name=value_data['value']
+            ).first()
+            
+            if existing_value:
+                # Update priority based on assessment rank
+                existing_value.priority = value_data.get('rank', i)
+                existing_value.description = value_data.get('definition', existing_value.description)
+            else:
+                # Create new Value record
+                new_value = Value(
+                    user_id=self.user_id,
+                    name=value_data['value'],
+                    description=value_data.get('definition', ''),
+                    priority=value_data.get('rank', i)
+                )
+                db.session.add(new_value)
+        
+        db.session.commit()
+    
+    def __repr__(self):
+        return f'<CoreValueAssessment User {self.user_id} - {len(self.top_values or [])} values>'

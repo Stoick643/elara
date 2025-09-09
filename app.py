@@ -33,6 +33,8 @@ def create_app(config_name=None):
     from routes.calendar import calendar_bp
     from routes.avatar import avatar_bp
     from routes.chat import chat_bp
+    from routes.discovery import discovery_bp
+    from routes.tasks import tasks_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp)
@@ -42,6 +44,8 @@ def create_app(config_name=None):
     app.register_blueprint(calendar_bp, url_prefix='/calendar')
     app.register_blueprint(avatar_bp, url_prefix='/avatar')
     app.register_blueprint(chat_bp, url_prefix='/chat')
+    app.register_blueprint(discovery_bp, url_prefix='/discovery')
+    app.register_blueprint(tasks_bp, url_prefix='/tasks')
     
     # Create database tables
     with app.app_context():

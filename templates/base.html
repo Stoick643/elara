@@ -27,30 +27,80 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">
-                            <i class="bi bi-house-heart"></i> Today
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-compass"></i> Discover
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('discovery.discovery_home') }}">
+                                <i class="bi bi-house"></i> Discovery Home
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('discovery.values_assessment') }}">
+                                <i class="bi bi-heart"></i> Core Values
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('discovery.vision_builder') }}">
+                                <i class="bi bi-eye"></i> Life Vision
+                            </a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('journal.journal') }}">
-                            <i class="bi bi-journal-text"></i> Journal
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-target"></i> Plan
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('goals.goals_list') }}">
+                                <i class="bi bi-bullseye"></i> Strategic Goals
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Goal Management</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('goals.goals_list') }}?filter=active">
+                                <i class="bi bi-play"></i> Active Goals
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('goals.goals_list') }}?filter=completed">
+                                <i class="bi bi-check-circle"></i> Completed Goals
+                            </a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('goals.goals_list') }}">
-                            <i class="bi bi-target"></i> Goals
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-lightning"></i> Execute
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('calendar.calendar_view') }}">
+                                <i class="bi bi-calendar-event"></i> <strong>Calendar View</strong>
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('tasks.task_list') }}">
+                                <i class="bi bi-list-task"></i> <strong>Task Management</strong>
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard.dashboard') }}">
+                                <i class="bi bi-house-heart"></i> Today's Focus
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('habits.habits_dashboard') }}">
+                                <i class="bi bi-repeat"></i> Daily Habits
+                            </a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('habits.habits_dashboard') }}">
-                            <i class="bi bi-repeat"></i> Habits
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-chat-heart"></i> Reflect
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('calendar.calendar_view') }}">
-                            <i class="bi bi-calendar3"></i> Calendar
-                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('chat.chat_interface') }}">
+                                <i class="bi bi-robot"></i> AI Coach Chat
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('journal.journal') }}">
+                                <i class="bi bi-journal-text"></i> Journal
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Insights</h6></li>
+                            <li><a class="dropdown-item" href="#" onclick="alert('Weekly reviews coming soon!')">
+                                <i class="bi bi-calendar-week"></i> Weekly Reviews
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="alert('Life assessments coming soon!')">
+                                <i class="bi bi-pie-chart"></i> Life Assessment
+                            </a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('avatar.select_personality') }}">

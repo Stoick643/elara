@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - Task Details - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-detail-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .task-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+    }
+    
+    .task-content {
+        padding: 2rem;
+    }
+    
+    .task-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .status-completed {
+        color: #22c55e;
+    }
+    
+    .status-pending {
+        color: #3b82f6;
+    }
+    
+    .status-overdue {
+        color: #ef4444;
+    }
+    
+    .detail-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .detail-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-value {
+        color: #6b7280;
+    }
+    
+    .energy-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .energy-high {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+    
+    .energy-medium {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+    }
+    
+    .energy-low {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+    }
+    
+    .goal-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        color: #4338ca;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .goal-link:hover {
+        background: rgba(102, 126, 234, 0.2);
+        color: #4338ca;
+        text-decoration: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .completion-toggle {
+        font-size: 1.1rem;
+        padding: 0.75rem 2rem;
+    }
+    
+    .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .date-today {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+    }
+    
+    .date-overdue {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+    
+    .date-future {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+    }
+    
+    .timestamps {
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tasks.task_list') }}">
+                <i class="bi bi-list-task"></i> Tasks
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ task.title }}</li>
+    </ol>
+</nav>
+
+<!-- Task Detail Card -->
+<div class="task-detail-card">
+    <!-- Header -->
+    <div class="task-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="task-status mb-3">
+                    {% if task.completed %}
+                        <i class="bi bi-check-circle status-completed"></i>
+                        <span class="status-completed">Completed</span>
+                        {% if task.completed_at %}
+                        <small class="opacity-75">on {{ task.completed_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                        {% endif %}
+                    {% elif task.due_date and task.due_date < today %}
+                        <i class="bi bi-exclamation-circle status-overdue"></i>
+                        <span class="status-overdue">Overdue</span>
+                    {% else %}
+                        <i class="bi bi-circle status-pending"></i>
+                        <span class="status-pending">Pending</span>
+                    {% endif %}
+                </div>
+                <h1 class="mb-0">{{ task.title }}</h1>
+            </div>
+            <div>
+                <button class="btn btn-light completion-toggle" onclick="toggleTask({{ task.id }})">
+                    {% if task.completed %}
+                        <i class="bi bi-x-circle"></i> Mark Incomplete
+                    {% else %}
+                        <i class="bi bi-check-circle"></i> Mark Complete
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="task-content">
+        <!-- Description -->
+        {% if task.description %}
+        <div class="detail-section">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">{{ task.description | replace('\n', '<br>') | safe }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Task Details -->
+        <div class="detail-section">
+            <div class="detail-label">Task Details</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Energy Required</small>
+                        <div class="energy-indicator energy-{{ task.energy_required }}">
+                            {{ task.get_energy_icon() }}
+                            {{ task.energy_required|title }} Energy
+                        </div>
+                    </div>
+                </div>
+                
+                {% if task.due_date %}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Due Date</small>
+                        <div class="date-badge 
+                            {% if task.due_date == today %}date-today
+                            {% elif task.due_date < today %}date-overdue
+                            {% else %}date-future{% endif %}">
+                            <i class="bi bi-calendar-event"></i>
+                            {{ task.due_date.strftime('%A, %B %d, %Y') }}
+                            {% if task.due_date == today %}
+                                (Today)
+                            {% elif task.due_date < today %}
+                                ({{ (today - task.due_date).days }} day{{ 's' if (today - task.due_date).days != 1 else '' }} overdue)
+                            {% else %}
+                                ({{ (task.due_date - today).days }} day{{ 's' if (task.due_date - today).days != 1 else '' }} remaining)
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Goal Connection -->
+        {% if task.goal %}
+        <div class="detail-section">
+            <div class="detail-label">Connected Goal</div>
+            <a href="{{ url_for('goals.view_goal', goal_id=task.goal.id) }}" class="goal-link">
+                <i class="bi bi-bullseye"></i>
+                {{ task.goal.title }}
+                <span class="badge bg-primary">{{ task.goal.progress }}% complete</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="detail-section">
+            <div class="detail-label">Goal Connection</div>
+            <div class="detail-value">
+                <span class="text-muted">Not connected to any goal</span>
+                <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary ms-3">
+                    <i class="bi bi-link"></i> Connect to Goal
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Timestamps -->
+        <div class="detail-section">
+            <div class="detail-label">Timeline</div>
+            <div class="timestamps">
+                <div class="mb-2">
+                    <strong>Created:</strong> {{ task.created_at.strftime('%A, %B %d, %Y at %I:%M %p') }}
+                </div>
+                {% if task.completed_at %}
+                <div>
+                    <strong>Completed:</strong> {{ task.completed_at.strftime('%A, %B %d, %Y at %I:%M %p') }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit Task
+            </a>
+            
+            <button class="btn btn-danger" onclick="deleteTask({{ task.id }}, '{{ task.title }}')">
+                <i class="bi bi-trash"></i> Delete Task
+            </button>
+            
+            <a href="{{ url_for('tasks.task_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Tasks
+            </a>
+            
+            {% if not task.goal and goals %}
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-link"></i> Quick Connect to Goal
+                </button>
+                <ul class="dropdown-menu">
+                    {% for goal in goals %}
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="connectToGoal({{ goal.id }}, '{{ goal.title }}')">
+                            {{ goal.title }}
+                            <small class="text-muted d-block">{{ goal.progress }}% complete</small>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle task completion
+async function toggleTask(taskId) {
+    try {
+        const response = await fetch(`/tasks/api/tasks/${taskId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast(data.message, 'success');
+            
+            // Reload to show updated task state
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            throw new Error('Failed to toggle task');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error updating task. Please try again.', 'error');
+    }
+}
+
+// Delete task confirmation
+function deleteTask(taskId, taskTitle) {
+    if (confirm(`Are you sure you want to delete "${taskTitle}"?\n\nThis action cannot be undone.`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/tasks/tasks/${taskId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Quick connect to goal
+async function connectToGoal(goalId, goalTitle) {
+    if (confirm(`Connect this task to the goal "${goalTitle}"?`)) {
+        try {
+            const response = await fetch('/api/connect-task-to-goal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task_id: {{ task.id }},
+                    goal_id: goalId
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                throw new Error('Failed to connect task to goal');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error connecting task to goal. Please try again.', 'error');
+        }
+    }
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    const toast = new bootstrap.Toast(container.lastElementChild);
+    toast.show();
+    
+    container.lastElementChild.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+</script>
+{% endblock %}

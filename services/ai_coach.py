@@ -372,3 +372,153 @@ class AICoach:
         
         response, _ = self.generate_response(user_id, prompt, include_context=True)
         return response
+    
+    def guide_values_discovery(self, user_id: int, context: dict) -> str:
+        """Provide AI guidance for values discovery process."""
+        selected_values = context.get('selected_values', [])
+        current_phase = context.get('phase', 'selection')
+        
+        if current_phase == 'selection':
+            prompt = f"""I'm helping a user discover their core values. They've selected these values so far: {', '.join(selected_values) if selected_values else 'none yet'}.
+
+            Provide encouraging, insightful guidance to help them:
+            1. Reflect on whether these values truly resonate with their authentic self
+            2. Consider any important values they might be missing
+            3. Think about what these values mean to them personally
+            
+            Keep it supportive and thought-provoking. Ask 1-2 gentle questions to help them go deeper."""
+            
+        elif current_phase == 'ranking':
+            prompt = f"""The user is now ranking their top values: {', '.join(selected_values)}. 
+
+            Help them think about:
+            1. Which values are truly non-negotiable vs. nice-to-have
+            2. How these values have shown up in their peak moments
+            3. Which values, if honored, would make them feel most authentic
+            
+            Provide guidance for making these tough ranking decisions."""
+            
+        else:  # reflection phase
+            top_values = context.get('top_values', selected_values[:5])
+            prompt = f"""The user has identified their top core values: {', '.join(top_values)}.
+
+            Help them reflect on:
+            1. What makes each value personally meaningful to them
+            2. How these values connect to their life experiences
+            3. How they can honor these values more in daily life
+            
+            Be encouraging about their self-discovery journey."""
+        
+        response, _ = self.generate_response(user_id, prompt, include_context=False)
+        return response
+    
+    def guide_vision_creation(self, user_id: int, context: dict) -> str:
+        """Provide AI guidance for vision statement creation."""
+        current_vision = context.get('current_vision', '')
+        current_mission = context.get('current_mission', '')
+        values_assessment = self._get_user_values(user_id)
+        
+        values_context = ""
+        if values_assessment:
+            top_values = values_assessment.get_top_value_names()[:5]
+            values_context = f"Their core values are: {', '.join(top_values)}."
+        
+        prompt = f"""I'm helping a user create their life vision statement. {values_context}
+
+        Current vision draft: "{current_vision}"
+        Current mission draft: "{current_mission}"
+        
+        Provide personalized guidance to help them:
+        1. Make their vision more vivid and emotionally compelling
+        2. Ensure it aligns with their core values
+        3. Make it feel inspiring and authentic to who they are
+        4. Add specific details that make it feel real and achievable
+        
+        Offer 2-3 specific suggestions and ask a thought-provoking question to help them go deeper."""
+        
+        response, _ = self.generate_response(user_id, prompt, include_context=True)
+        return response
+    
+    def provide_discovery_reflection(self, user_id: int, context: dict) -> str:
+        """Provide reflection on completed discovery process."""
+        values_assessment = self._get_user_values(user_id)
+        vision_statement = self._get_user_vision(user_id)
+        
+        if not values_assessment or not vision_statement:
+            return "Please complete both your values assessment and vision statement first."
+        
+        top_values = values_assessment.get_top_value_names()[:5]
+        vision_text = vision_statement.vision_statement[:200] + "..." if len(vision_statement.vision_statement) > 200 else vision_statement.vision_statement
+        
+        prompt = f"""The user has completed their discovery process:
+        
+        Core Values: {', '.join(top_values)}
+        Vision: "{vision_text}"
+        
+        Provide a thoughtful reflection that:
+        1. Celebrates their self-discovery journey
+        2. Highlights connections between their values and vision
+        3. Offers insights about what this reveals about them
+        4. Suggests next steps for living more aligned with their discovery
+        
+        Be warm, encouraging, and insightful. Help them see the power of what they've discovered."""
+        
+        response, _ = self.generate_response(user_id, prompt, include_context=True)
+        return response
+    
+    def suggest_task_goal_connections(self, user_id: int) -> str:
+        """Suggest how orphaned tasks could connect to goals or values."""
+        orphaned_tasks = self._get_orphaned_tasks(user_id)
+        values_assessment = self._get_user_values(user_id)
+        active_goals = self._get_active_goals(user_id)
+        
+        if not orphaned_tasks:
+            return "Great job! All your tasks are connected to your goals."
+        
+        task_titles = [task.title for task in orphaned_tasks[:10]]  # Limit to 10 tasks
+        values_context = ""
+        goals_context = ""
+        
+        if values_assessment:
+            top_values = values_assessment.get_top_value_names()[:5]
+            values_context = f"Their core values: {', '.join(top_values)}."
+        
+        if active_goals:
+            goal_titles = [goal.title for goal in active_goals[:5]]
+            goals_context = f"Their active goals: {', '.join(goal_titles)}."
+        
+        prompt = f"""The user has these unconnected tasks: {', '.join(task_titles)}
+        
+        {values_context}
+        {goals_context}
+        
+        Analyze these tasks and provide specific suggestions for:
+        1. Which tasks naturally group together and could become a new goal
+        2. Which tasks support existing goals and should be connected
+        3. Which tasks align with their values and why that matters
+        4. Any tasks that might not serve their bigger picture
+        
+        Be specific and actionable in your recommendations."""
+        
+        response, _ = self.generate_response(user_id, prompt, include_context=False)
+        return response
+    
+    def _get_user_values(self, user_id: int):
+        """Helper to get user's current values assessment."""
+        from models import CoreValueAssessment
+        return CoreValueAssessment.query.filter_by(user_id=user_id, is_current=True).first()
+    
+    def _get_user_vision(self, user_id: int):
+        """Helper to get user's current vision statement."""
+        from models import VisionStatement
+        return VisionStatement.query.filter_by(user_id=user_id, is_current=True).first()
+    
+    def _get_orphaned_tasks(self, user_id: int):
+        """Helper to get tasks not connected to goals."""
+        from models import Task
+        return Task.query.filter_by(user_id=user_id, goal_id=None, completed=False).limit(10).all()
+    
+    def _get_active_goals(self, user_id: int):
+        """Helper to get user's active goals."""
+        from models import Goal
+        return Goal.query.filter_by(user_id=user_id, status='active').limit(10).all()
