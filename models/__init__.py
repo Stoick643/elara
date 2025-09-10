@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     # Level A: Vision and Values Discovery
     vision_statements = db.relationship('VisionStatement', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     value_assessments = db.relationship('CoreValueAssessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    life_assessments = db.relationship('LifeAssessment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -364,49 +365,119 @@ class WeeklyReview(db.Model):
 
 
 class LifeAssessment(db.Model):
-    """Wheel of Life assessment tracking."""
+    """Life Balance Assessment model - Wheel of Life functionality."""
     __tablename__ = 'life_assessments'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Eight life dimensions (1-10 scale)
-    career = db.Column(db.Integer, nullable=False)
-    health = db.Column(db.Integer, nullable=False)
-    relationships = db.Column(db.Integer, nullable=False)
-    finance = db.Column(db.Integer, nullable=False)
-    fun_recreation = db.Column(db.Integer, nullable=False)
-    personal_growth = db.Column(db.Integer, nullable=False)
-    family = db.Column(db.Integer, nullable=False)
-    spirituality = db.Column(db.Integer, nullable=False)
+    # Life area scores (1-10 scale)
+    career_score = db.Column(db.Integer, nullable=False)
+    health_score = db.Column(db.Integer, nullable=False)
+    relationships_score = db.Column(db.Integer, nullable=False)
+    finance_score = db.Column(db.Integer, nullable=False)
+    personal_growth_score = db.Column(db.Integer, nullable=False)
+    fun_recreation_score = db.Column(db.Integer, nullable=False)
+    environment_score = db.Column(db.Integer, nullable=False)
+    purpose_score = db.Column(db.Integer, nullable=False)
     
-    # Optional reflection
+    # Calculated fields
+    overall_balance = db.Column(db.Float, nullable=True)
+    
+    # Metadata
     notes = db.Column(db.Text, nullable=True)
-    focus_areas = db.Column(db.JSON, nullable=True)  # Areas user wants to improve
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
-    assessment_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def get_average_score(self):
-        """Calculate average score across all dimensions."""
-        scores = [self.career, self.health, self.relationships, self.finance,
-                 self.fun_recreation, self.personal_growth, self.family, self.spirituality]
-        return sum(scores) / len(scores)
-    
-    def get_dimensions_dict(self):
-        """Return dimensions as dictionary for visualization."""
+    def calculate_balance(self):
+        """Calculate overall balance score and identify key areas."""
+        scores = [
+            self.career_score,
+            self.health_score,
+            self.relationships_score,
+            self.finance_score,
+            self.personal_growth_score,
+            self.fun_recreation_score,
+            self.environment_score,
+            self.purpose_score
+        ]
+        
+        # Calculate average
+        self.overall_balance = sum(scores) / len(scores)
+        
+        # Get area names and scores for analysis
+        areas = [
+            ('Career & Work', self.career_score),
+            ('Health & Fitness', self.health_score),
+            ('Relationships', self.relationships_score),
+            ('Money & Finance', self.finance_score),
+            ('Personal Growth', self.personal_growth_score),
+            ('Fun & Recreation', self.fun_recreation_score),
+            ('Home Environment', self.environment_score),
+            ('Purpose & Meaning', self.purpose_score)
+        ]
+        
+        # Sort areas by score
+        areas_sorted = sorted(areas, key=lambda x: x[1])
+        
         return {
-            'career': self.career,
-            'health': self.health,
-            'relationships': self.relationships,
-            'finance': self.finance,
-            'fun_recreation': self.fun_recreation,
-            'personal_growth': self.personal_growth,
-            'family': self.family,
-            'spirituality': self.spirituality
+            'overall_balance': round(self.overall_balance, 1),
+            'lowest_areas': areas_sorted[:3],  # Bottom 3 areas
+            'highest_areas': areas_sorted[-3:],  # Top 3 areas
+            'all_scores': dict(areas)
+        }
+    
+    def get_improvement_areas(self):
+        """Get list of areas needing attention (score < 5)."""
+        areas = [
+            ('Career & Work', self.career_score),
+            ('Health & Fitness', self.health_score),
+            ('Relationships', self.relationships_score),
+            ('Money & Finance', self.finance_score),
+            ('Personal Growth', self.personal_growth_score),
+            ('Fun & Recreation', self.fun_recreation_score),
+            ('Home Environment', self.environment_score),
+            ('Purpose & Meaning', self.purpose_score)
+        ]
+        
+        # Filter areas that need attention
+        improvement_areas = [area for area in areas if area[1] < 5]
+        
+        # Sort by lowest score first (most critical)
+        improvement_areas.sort(key=lambda x: x[1])
+        
+        # Add priority levels
+        result = []
+        for area_name, score in improvement_areas:
+            if score <= 2:
+                priority = 'critical'
+            elif score <= 3:
+                priority = 'high'
+            else:
+                priority = 'moderate'
+            
+            result.append({
+                'area': area_name,
+                'score': score,
+                'priority': priority
+            })
+        
+        return result
+    
+    def get_scores_dict(self):
+        """Return all scores as a dictionary for easy template access."""
+        return {
+            'Career & Work': self.career_score,
+            'Health & Fitness': self.health_score,
+            'Relationships': self.relationships_score,
+            'Money & Finance': self.finance_score,
+            'Personal Growth': self.personal_growth_score,
+            'Fun & Recreation': self.fun_recreation_score,
+            'Home Environment': self.environment_score,
+            'Purpose & Meaning': self.purpose_score
         }
     
     def __repr__(self):
-        return f'<LifeAssessment {self.user_id} - {self.assessment_date}>'
+        return f'<LifeAssessment User {self.user_id} - Balance: {self.overall_balance or "Not calculated"}>'
 
 
 class Insight(db.Model):

@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block title %}Wheel of Life Assessment - Elara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assessment-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-content {
+        padding: 2rem;
+    }
+    
+    .life-area {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 2px solid #f1f5f9;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .life-area:hover {
+        border-color: #6366f1;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+    }
+    
+    .area-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .area-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 0;
+        flex-grow: 1;
+    }
+    
+    .area-score {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #6366f1;
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .area-description {
+        color: #6b7280;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .slider-container {
+        position: relative;
+        margin-top: 1rem;
+    }
+    
+    .life-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #eab308 50%, #84cc16 75%, #22c55e 100%);
+        outline: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+    }
+    
+    .life-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #6366f1;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .life-slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #6366f1;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .notes-section {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+    }
+    
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #6366f1;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    .progress-overview {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .overall-score {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #6366f1;
+    }
+    
+    .score-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('assessment.assessment_home') }}">
+                <i class="bi bi-pie-chart"></i> Life Assessment
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Wheel of Life</li>
+    </ol>
+</nav>
+
+<!-- Assessment Card -->
+<div class="assessment-card">
+    <!-- Header -->
+    <div class="form-header">
+        <h1><i class="bi bi-pie-chart"></i> Wheel of Life Assessment</h1>
+        <p class="lead mb-0">Rate each area of your life from 1 (needs major improvement) to 10 (completely satisfied)</p>
+    </div>
+    
+    <!-- Form Content -->
+    <div class="form-content">
+        <!-- Progress Overview -->
+        <div class="progress-overview" id="progressOverview" style="display: none;">
+            <div class="overall-score" id="overallScore">0.0</div>
+            <div class="score-label">Overall Life Balance</div>
+        </div>
+        
+        <form method="POST" id="assessmentForm">
+            <!-- Career & Work -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">🏢 Career & Work</h3>
+                    <div class="area-score" id="career-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Your professional life, job satisfaction, career progress, work-life balance, and sense of purpose in your work.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="career_score" name="career_score"
+                           oninput="updateScore('career', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Completely Unsatisfied</span>
+                        <span>5 - Neutral</span>
+                        <span>10 - Completely Satisfied</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health & Fitness -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">💪 Health & Fitness</h3>
+                    <div class="area-score" id="health-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Physical health, energy levels, fitness, nutrition, sleep quality, and overall wellbeing.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="health_score" name="health_score"
+                           oninput="updateScore('health', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Poor Health</span>
+                        <span>5 - Average</span>
+                        <span>10 - Excellent Health</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relationships -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">❤️ Relationships</h3>
+                    <div class="area-score" id="relationships-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Family, friends, romantic relationships, social connections, and the quality of your relationships.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="relationships_score" name="relationships_score"
+                           oninput="updateScore('relationships', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Lonely/Troubled</span>
+                        <span>5 - Satisfactory</span>
+                        <span>10 - Deeply Fulfilling</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Money & Finance -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">💰 Money & Finance</h3>
+                    <div class="area-score" id="finance-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Financial security, income satisfaction, savings, debt management, and financial goals.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="finance_score" name="finance_score"
+                           oninput="updateScore('finance', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Financial Stress</span>
+                        <span>5 - Getting By</span>
+                        <span>10 - Financial Freedom</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Growth -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">🌱 Personal Growth</h3>
+                    <div class="area-score" id="personal_growth-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Learning, self-development, skills acquisition, education, and personal challenges.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="personal_growth_score" name="personal_growth_score"
+                           oninput="updateScore('personal_growth', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Stagnant</span>
+                        <span>5 - Some Progress</span>
+                        <span>10 - Thriving Growth</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fun & Recreation -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">🎉 Fun & Recreation</h3>
+                    <div class="area-score" id="fun_recreation-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Hobbies, leisure activities, entertainment, travel, and time for enjoyment and relaxation.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="fun_recreation_score" name="fun_recreation_score"
+                           oninput="updateScore('fun_recreation', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - No Fun</span>
+                        <span>5 - Some Enjoyment</span>
+                        <span>10 - Life of the Party</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Home Environment -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">🏠 Home Environment</h3>
+                    <div class="area-score" id="environment-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Living space, home organization, comfort, location, and feeling at peace in your environment.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="environment_score" name="environment_score"
+                           oninput="updateScore('environment', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Chaotic/Uncomfortable</span>
+                        <span>5 - Adequate</span>
+                        <span>10 - Perfect Sanctuary</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purpose & Meaning -->
+            <div class="life-area">
+                <div class="area-header">
+                    <h3 class="area-title">🎯 Purpose & Meaning</h3>
+                    <div class="area-score" id="purpose-score-display">5</div>
+                </div>
+                <div class="area-description">
+                    Sense of purpose, spiritual life, values alignment, contribution to others, and meaning in life.
+                </div>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" 
+                           class="life-slider" id="purpose_score" name="purpose_score"
+                           oninput="updateScore('purpose', this.value)">
+                    <div class="slider-labels">
+                        <span>1 - Lost/Empty</span>
+                        <span>5 - Some Direction</span>
+                        <span>10 - Clear Purpose</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="notes-section">
+                <label for="notes" class="form-label">
+                    <i class="bi bi-journal-text"></i> Additional Notes (Optional)
+                </label>
+                <textarea class="form-control" id="notes" name="notes" rows="3"
+                          placeholder="Any thoughts, insights, or specific areas you'd like to focus on..."></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle"></i> Complete Assessment
+                </button>
+                
+                <a href="{{ url_for('assessment.assessment_home') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update score display and overall balance
+function updateScore(area, value) {
+    document.getElementById(area + '-score-display').textContent = value;
+    updateOverallBalance();
+}
+
+function updateOverallBalance() {
+    const scores = [
+        'career_score', 'health_score', 'relationships_score', 'finance_score',
+        'personal_growth_score', 'fun_recreation_score', 'environment_score', 'purpose_score'
+    ];
+    
+    let total = 0;
+    scores.forEach(scoreId => {
+        total += parseInt(document.getElementById(scoreId).value);
+    });
+    
+    const average = total / scores.length;
+    document.getElementById('overallScore').textContent = average.toFixed(1);
+    
+    // Show progress overview once user starts interacting
+    document.getElementById('progressOverview').style.display = 'block';
+    
+    // Update color based on score
+    const scoreElement = document.getElementById('overallScore');
+    if (average < 4) {
+        scoreElement.style.color = '#ef4444';
+    } else if (average < 7) {
+        scoreElement.style.color = '#f59e0b';
+    } else {
+        scoreElement.style.color = '#22c55e';
+    }
+}
+
+// Form validation
+document.getElementById('assessmentForm').addEventListener('submit', function(e) {
+    const scores = [
+        'career_score', 'health_score', 'relationships_score', 'finance_score',
+        'personal_growth_score', 'fun_recreation_score', 'environment_score', 'purpose_score'
+    ];
+    
+    // Check all scores are valid
+    for (let scoreId of scores) {
+        const value = parseInt(document.getElementById(scoreId).value);
+        if (value < 1 || value > 10) {
+            e.preventDefault();
+            alert('Please ensure all scores are between 1 and 10.');
+            return false;
+        }
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving Assessment...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after a delay in case there's an error
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Update all displays to show initial values
+    const sliders = document.querySelectorAll('.life-slider');
+    sliders.forEach(slider => {
+        const area = slider.id.replace('_score', '');
+        updateScore(area, slider.value);
+    });
+});
+</script>
+{% endblock %}

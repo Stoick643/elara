@@ -55,6 +55,7 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+tmp/
 
 # Windows specific
 ehthumbs.db
