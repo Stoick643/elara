@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Create Your First Goal - Elara{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Step 2 of 3</h4>
+                    <a href="{{ url_for('onboarding.skip_onboarding') }}" class="btn btn-link text-muted">Skip Setup</a>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 66%"></div>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <i class="bi bi-target text-success display-4 mb-3"></i>
+                <h1 class="h2 mb-3">Set Your First Meaningful Goal</h1>
+                <p class="lead text-muted">
+                    Goals give direction to your journey. Create something that excites you and aligns with your core values.
+                </p>
+            </div>
+
+            <!-- Goal Creation Form -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-4">
+                            {{ form.title.label(class="form-label h5") }}
+                            {{ form.title(class="form-control form-control-lg", placeholder="e.g., 'Learn Spanish fluently' or 'Run a marathon'") }}
+                            {% if form.title.errors %}
+                                {% for error in form.title.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <small class="text-muted">Make it specific and inspiring!</small>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.description.label(class="form-label h5") }}
+                            {{ form.description(class="form-control", rows="4", placeholder="Why is this goal important to you? How will achieving it make you feel?") }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <small class="text-muted">Connecting to your 'why' increases motivation</small>
+                        </div>
+
+                        <!-- Goal Examples -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-lightbulb me-2"></i>Need inspiration? Here are some examples:
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body p-3 text-center">
+                                            <i class="bi bi-heart text-danger h4 mb-2"></i>
+                                            <h6 class="card-title">Health & Wellness</h6>
+                                            <small class="text-muted">Exercise 3x/week, eat more vegetables, get 8hrs sleep</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body p-3 text-center">
+                                            <i class="bi bi-book text-primary h4 mb-2"></i>
+                                            <h6 class="card-title">Learning</h6>
+                                            <small class="text-muted">Master a new skill, read 12 books, take an online course</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body p-3 text-center">
+                                            <i class="bi bi-people text-success h4 mb-2"></i>
+                                            <h6 class="card-title">Relationships</h6>
+                                            <small class="text-muted">Call family weekly, make new friends, strengthen connections</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Values Connection -->
+                        <div class="p-3 bg-light rounded mb-4">
+                            <h6 class="text-primary mb-2">
+                                <i class="bi bi-link-45deg me-2"></i>Connected to Your Values
+                            </h6>
+                            <p class="text-muted mb-0 small">
+                                This goal will be automatically linked to your core values to ensure it's meaningful and sustainable.
+                            </p>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('onboarding.values_selection') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            
+                            {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Goal Tips -->
+            <div class="mt-4">
+                <div class="card border-0 bg-info bg-opacity-10">
+                    <div class="card-body p-3">
+                        <h6 class="text-info mb-2">
+                            <i class="bi bi-info-circle me-2"></i>Pro Tip
+                        </h6>
+                        <small class="text-muted">
+                            Great goals are SMART: <strong>S</strong>pecific, <strong>M</strong>easurable, 
+                            <strong>A</strong>chievable, <strong>R</strong>elevant, and <strong>T</strong>ime-bound. 
+                            You can refine the details later!
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('[name="title"]');
+    const descriptionInput = document.querySelector('[name="description"]');
+    
+    // Character counter for title
+    if (titleInput) {
+        const maxLength = 200;
+        titleInput.addEventListener('input', function() {
+            const remaining = maxLength - this.value.length;
+            const color = remaining < 20 ? 'text-danger' : remaining < 50 ? 'text-warning' : 'text-muted';
+            
+            // Find or create counter
+            let counter = this.parentNode.querySelector('.char-counter');
+            if (!counter) {
+                counter = document.createElement('small');
+                counter.className = 'char-counter';
+                this.parentNode.appendChild(counter);
+            }
+            
+            counter.className = `char-counter ${color}`;
+            counter.textContent = `${remaining} characters remaining`;
+        });
+    }
+
+    // Auto-resize textarea
+    if (descriptionInput) {
+        descriptionInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+});
+</script>
+
+<style>
+.card {
+    border: none;
+}
+
+.progress {
+    border-radius: 1rem;
+}
+
+.progress-bar {
+    border-radius: 1rem;
+}
+
+.form-control-lg {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.bg-opacity-10 {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+</style>
+{% endblock %}

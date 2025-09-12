@@ -16,6 +16,13 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     
+    # Onboarding tracking
+    onboarding_completed = db.Column(db.Boolean, default=False)
+    onboarding_step = db.Column(db.Integer, default=0)  # 0=not started, 1=values, 2=goal, 3=habit, 4=completed
+    
+    # User experience preferences
+    is_pro_mode = db.Column(db.Boolean, default=False)  # False=simple, True=pro
+    
     # Relationships
     journal_entries = db.relationship('JournalEntry', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='user', lazy='dynamic', cascade='all, delete-orphan')
@@ -49,6 +56,28 @@ class User(UserMixin, db.Model):
         has_values = self.get_current_values_assessment() is not None
         has_vision = self.get_current_vision() is not None
         return has_values and has_vision
+    
+    def needs_onboarding(self):
+        """Check if user should see onboarding flow."""
+        return not self.onboarding_completed
+    
+    def complete_onboarding(self):
+        """Mark user onboarding as completed."""
+        self.onboarding_completed = True
+        self.onboarding_step = 4
+        db.session.commit()
+    
+    def advance_onboarding_step(self):
+        """Move to next onboarding step."""
+        if self.onboarding_step < 4:
+            self.onboarding_step += 1
+        db.session.commit()
+    
+    def skip_onboarding(self):
+        """Skip onboarding process entirely."""
+        self.onboarding_completed = True
+        self.onboarding_step = 4
+        db.session.commit()
     
     def get_discovery_progress(self):
         """Return discovery completion status for onboarding."""

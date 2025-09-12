@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Regexp
 from models import db, User
 
 auth_bp = Blueprint('auth', __name__)
@@ -26,7 +26,9 @@ class RegistrationForm(FlaskForm):
     ])
     password = PasswordField('Password', validators=[
         DataRequired(),
-        Length(min=6, message='Password must be at least 6 characters long.')
+        Length(min=8, message='Password must be at least 8 characters long.'),
+        Regexp(r'(?=.*[A-Z])', message='Password must contain at least one uppercase letter.'),
+        Regexp(r'(?=.*\d)', message='Password must contain at least one number.')
     ])
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
@@ -89,7 +91,12 @@ def register():
         # Log the user in immediately
         login_user(user, remember=True)
         flash(f'Welcome to Elara, {user.username}! Your {user.avatar_personality.replace("_", " ").title()} coach is ready to help you.', 'success')
-        return redirect(url_for('dashboard.dashboard'))
+        
+        # Redirect to onboarding if needed, otherwise dashboard
+        if user.needs_onboarding():
+            return redirect(url_for('onboarding.welcome'))
+        else:
+            return redirect(url_for('dashboard.dashboard'))
     
     return render_template('auth/register.html', form=form)
 

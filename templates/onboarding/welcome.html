@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Elara - {{ current_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100">
+    <div class="row h-100 align-items-center justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="text-center">
+                <!-- Avatar Display -->
+                <div class="mb-4">
+                    {% if personality == 'sage' %}
+                        <div class="display-1 mb-3">🧙‍♂️</div>
+                        <h2 class="text-primary">The Sage</h2>
+                        <p class="lead text-muted">Your wise and philosophical guide</p>
+                    {% elif personality == 'champion' %}
+                        <div class="display-1 mb-3">🏆</div>
+                        <h2 class="text-primary">The Champion</h2>
+                        <p class="lead text-muted">Your energetic motivational coach</p>
+                    {% elif personality == 'friend' %}
+                        <div class="display-1 mb-3">🤝</div>
+                        <h2 class="text-primary">The Friend</h2>
+                        <p class="lead text-muted">Your warm and supportive companion</p>
+                    {% elif personality == 'strategist' %}
+                        <div class="display-1 mb-3">🎯</div>
+                        <h2 class="text-primary">The Strategist</h2>
+                        <p class="lead text-muted">Your analytical and data-driven advisor</p>
+                    {% elif personality == 'zen_master' %}
+                        <div class="display-1 mb-3">🧘</div>
+                        <h2 class="text-primary">The Zen Master</h2>
+                        <p class="lead text-muted">Your calm and mindful guide</p>
+                    {% endif %}
+                </div>
+
+                <!-- Coach Message -->
+                <div class="card border-0 shadow-lg mb-4">
+                    <div class="card-body p-4 p-md-5">
+                        <blockquote class="blockquote text-center mb-4">
+                            <p class="lead">"{{ coach_message }}"</p>
+                        </blockquote>
+                        
+                        <div class="row g-3 mt-4">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-heart-fill text-danger me-2"></i>
+                                    <small class="text-muted">Discover your core values</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-target text-success me-2"></i>
+                                    <small class="text-muted">Set your first meaningful goal</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-arrow-repeat text-info me-2"></i>
+                                    <small class="text-muted">Build your first habit</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{{ url_for('onboarding.values_selection') }}" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-play-circle"></i> Let's Begin!
+                    </a>
+                    
+                    <a href="{{ url_for('onboarding.skip_onboarding') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-skip-forward"></i> Skip Setup
+                    </a>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="mt-5">
+                    <small class="text-muted">Quick setup • 3 simple steps • 2 minutes</small>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.vh-100 {
+    min-height: 100vh;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.display-1 {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .display-1 {
+        font-size: 3rem;
+    }
+}
+</style>
+{% endblock %}

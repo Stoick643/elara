@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Your Core Values - Elara{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Step 1 of 3</h4>
+                    <a href="{{ url_for('onboarding.skip_onboarding') }}" class="btn btn-link text-muted">Skip Setup</a>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 33%"></div>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <i class="bi bi-heart-fill text-danger display-4 mb-3"></i>
+                <h1 class="h2 mb-3">What Matters Most to You?</h1>
+                <p class="lead text-muted">
+                    Your core values guide every decision and goal. Choose the 3 values that resonate most deeply with who you are.
+                </p>
+            </div>
+
+            <!-- Values Selection Form -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label h5">
+                                    <i class="bi bi-star text-warning me-2"></i>Your #1 Value
+                                </label>
+                                {{ form.value1(class="form-select form-select-lg") }}
+                                {% if form.value1.errors %}
+                                    {% for error in form.value1.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label h5">
+                                    <i class="bi bi-star text-warning me-2"></i>Your #2 Value
+                                </label>
+                                {{ form.value2(class="form-select form-select-lg") }}
+                                {% if form.value2.errors %}
+                                    {% for error in form.value2.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label h5">
+                                    <i class="bi bi-star text-warning me-2"></i>Your #3 Value
+                                </label>
+                                {{ form.value3(class="form-select form-select-lg") }}
+                                {% if form.value3.errors %}
+                                    {% for error in form.value3.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Values Preview -->
+                        <div class="mt-4 p-3 bg-light rounded" id="values-preview" style="display: none;">
+                            <h6 class="text-primary">Your Core Values:</h6>
+                            <div id="selected-values" class="text-muted"></div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="d-flex justify-content-between align-items-center mt-5">
+                            <a href="{{ url_for('onboarding.welcome') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            
+                            {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Values Explanation -->
+            <div class="mt-4 text-center">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    These values will help guide your goal-setting and decision-making throughout your journey.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = [
+        document.querySelector('[name="value1"]'),
+        document.querySelector('[name="value2"]'),
+        document.querySelector('[name="value3"]')
+    ];
+    const preview = document.getElementById('values-preview');
+    const selectedValues = document.getElementById('selected-values');
+
+    function updatePreview() {
+        const values = selects
+            .map(select => select.value ? select.options[select.selectedIndex].text : '')
+            .filter(text => text !== '');
+
+        if (values.length > 0) {
+            selectedValues.innerHTML = values.map((value, index) => 
+                `<div class="mb-1"><strong>${index + 1}.</strong> ${value}</div>`
+            ).join('');
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+        
+        // Prevent duplicate selections
+        selects.forEach((select, index) => {
+            const selectedValues = selects
+                .filter((s, i) => i !== index)
+                .map(s => s.value)
+                .filter(v => v !== '');
+            
+            Array.from(select.options).forEach(option => {
+                if (option.value && selectedValues.includes(option.value)) {
+                    option.disabled = true;
+                    option.style.color = '#ccc';
+                } else {
+                    option.disabled = false;
+                    option.style.color = '';
+                }
+            });
+        });
+    }
+
+    selects.forEach(select => {
+        if (select) {
+            select.addEventListener('change', updatePreview);
+        }
+    });
+
+    // Initial update
+    updatePreview();
+});
+</script>
+
+<style>
+.form-select-lg {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.card {
+    border: none;
+}
+
+.progress {
+    border-radius: 1rem;
+}
+
+.progress-bar {
+    border-radius: 1rem;
+}
+
+#values-preview {
+    border-left: 4px solid var(--bs-primary);
+}
+</style>
+{% endblock %}

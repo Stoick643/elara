@@ -80,7 +80,13 @@
 
                             <div class="mb-3">
                                 {{ form.password.label(class="form-label") }}
-                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="password-input") }}
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar" id="password-strength" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">
+                                    Password must be at least 8 characters with 1 uppercase letter and 1 number
+                                </small>
                                 {% if form.password.errors %}
                                     {% for error in form.password.errors %}
                                         <div class="invalid-feedback">{{ error }}</div>
@@ -135,4 +141,45 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password-input');
+    const strengthBar = document.getElementById('password-strength');
+    
+    if (passwordInput && strengthBar) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let classes = ['bg-danger'];
+            
+            // Length check
+            if (password.length >= 8) strength += 25;
+            
+            // Uppercase check
+            if (/[A-Z]/.test(password)) strength += 25;
+            
+            // Number check
+            if (/\d/.test(password)) strength += 25;
+            
+            // Special character check (bonus)
+            if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\?]/.test(password)) strength += 25;
+            
+            // Update progress bar
+            strengthBar.style.width = strength + '%';
+            strengthBar.className = 'progress-bar';
+            
+            if (strength <= 25) {
+                strengthBar.classList.add('bg-danger');
+            } else if (strength <= 50) {
+                strengthBar.classList.add('bg-warning');
+            } else if (strength <= 75) {
+                strengthBar.classList.add('bg-info');
+            } else {
+                strengthBar.classList.add('bg-success');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

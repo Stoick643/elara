@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Elara{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h3 mb-1">Settings</h1>
+                    <p class="text-muted mb-0">Customize your Elara experience</p>
+                </div>
+            </div>
+
+            <!-- Mode Toggle Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-toggles me-2"></i>Interface Mode
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h6 class="mb-2">
+                                {% if current_user.is_pro_mode %}
+                                    <i class="bi bi-gear-fill text-warning me-2"></i>Pro Mode
+                                {% else %}
+                                    <i class="bi bi-layout-text-sidebar text-info me-2"></i>Simple Mode
+                                {% endif %}
+                            </h6>
+                            <p class="text-muted mb-3">
+                                {% if current_user.is_pro_mode %}
+                                    You have access to advanced features, detailed analytics, CBT tools, and comprehensive progress tracking.
+                                {% else %}
+                                    You're using the simplified interface with essential features for a clean, focused experience.
+                                {% endif %}
+                            </p>
+                            
+                            <!-- Feature Comparison -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="p-2 {% if current_user.is_pro_mode %}bg-warning bg-opacity-10 border border-warning{% else %}bg-light{% endif %} rounded">
+                                        <strong class="small">Pro Features:</strong>
+                                        <ul class="small mb-0 mt-1">
+                                            <li>Advanced analytics & insights</li>
+                                            <li>CBT thought records</li>
+                                            <li>Wheel of Life assessment</li>
+                                            <li>Detailed habit tracking</li>
+                                            <li>Weekly review system</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-2 {% if not current_user.is_pro_mode %}bg-info bg-opacity-10 border border-info{% else %}bg-light{% endif %} rounded">
+                                        <strong class="small">Simple Features:</strong>
+                                        <ul class="small mb-0 mt-1">
+                                            <li>Clean, minimal dashboard</li>
+                                            <li>Basic goal & task management</li>
+                                            <li>Essential habit tracking</li>
+                                            <li>Simple journal entries</li>
+                                            <li>AI chat support</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-center">
+                            <button id="mode-toggle-btn" class="btn btn-lg {% if current_user.is_pro_mode %}btn-outline-info{% else %}btn-outline-warning{% endif %} w-100">
+                                <i class="bi bi-arrow-left-right me-2"></i>
+                                Switch to {% if current_user.is_pro_mode %}Simple{% else %}Pro{% endif %} Mode
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-gear me-2"></i>Personal Preferences
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('settings.update_preferences') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- AI Coach Personality -->
+                        <div class="mb-4">
+                            {{ form.avatar_personality.label(class="form-label h6") }}
+                            <div class="row g-3">
+                                {% for value, label in form.avatar_personality.choices %}
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="avatar_personality" id="personality_{{ value }}" value="{{ value }}" {% if form.avatar_personality.data == value %}checked{% endif %}>
+                                        <label class="form-check-label w-100" for="personality_{{ value }}">
+                                            <div class="card border h-100" style="cursor: pointer;">
+                                                <div class="card-body p-3">
+                                                    <strong>{{ label }}</strong>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Hidden field for pro mode (handled by toggle button) -->
+                        {{ form.is_pro_mode(style="display: none;") }}
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i> Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-primary px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Settings -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>Additional Options
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Restart Onboarding</h6>
+                                    <small class="text-muted">Go through the setup process again</small>
+                                </div>
+                                <a href="{{ url_for('settings.restart_onboarding') }}" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Data Export</h6>
+                                    <small class="text-muted">Download your data</small>
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm" disabled>
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mode toggle functionality
+    const toggleBtn = document.getElementById('mode-toggle-btn');
+    const proModeInput = document.querySelector('[name="is_pro_mode"]');
+    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch('{{ url_for("settings.toggle_mode") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+                    
+                    // Reload page after short delay to update UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert('Failed to toggle mode: ' + data.message);
+                }
+            } catch (error) {
+                alert('Failed to toggle mode. Please try again.');
+            }
+        });
+    }
+    
+    // Personality selection styling
+    const radioButtons = document.querySelectorAll('input[name="avatar_personality"]');
+    radioButtons.forEach(radio => {
+        const card = radio.closest('label').querySelector('.card');
+        
+        radio.addEventListener('change', function() {
+            // Reset all cards
+            document.querySelectorAll('.form-check .card').forEach(c => {
+                c.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+            });
+            
+            // Highlight selected card
+            if (this.checked) {
+                card.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+            }
+        });
+        
+        // Set initial state
+        if (radio.checked) {
+            card.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        }
+        
+        // Make entire card clickable
+        card.addEventListener('click', function() {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        });
+    });
+});
+</script>
+
+<style>
+.card {
+    border: none;
+}
+
+.form-check {
+    padding: 0;
+}
+
+.form-check-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.form-check .card {
+    transition: all 0.2s ease;
+}
+
+.form-check .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bg-opacity-10 {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+}
+</style>
+{% endblock %}

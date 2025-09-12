@@ -36,6 +36,8 @@ def create_app(config_name=None):
     from routes.discovery import discovery_bp
     from routes.tasks import tasks_bp
     from routes.assessment import assessment_bp
+    from routes.onboarding import onboarding_bp
+    from routes.settings import settings_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp)
@@ -48,6 +50,8 @@ def create_app(config_name=None):
     app.register_blueprint(discovery_bp, url_prefix='/discovery')
     app.register_blueprint(tasks_bp, url_prefix='/tasks')
     app.register_blueprint(assessment_bp, url_prefix='/assessment')
+    app.register_blueprint(onboarding_bp)
+    app.register_blueprint(settings_bp)
     
     # Create database tables
     with app.app_context():
