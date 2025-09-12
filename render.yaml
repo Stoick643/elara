@@ -9,7 +9,7 @@ services:
     buildCommand: pip install -r requirements.txt
     
     # Start command for production
-    startCommand: gunicorn app:create_app() --bind 0.0.0.0:$PORT
+    startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT
     
     # Environment variables (set actual values in Render dashboard)
     envVars:
