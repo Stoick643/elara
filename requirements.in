@@ -17,6 +17,7 @@ WTForms==3.1.1
 
 # Utilities
 python-dateutil==2.8.2
+markdown==3.6
 
 # LLM Integration
 google-generativeai==0.3.2
