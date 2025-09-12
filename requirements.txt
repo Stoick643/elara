@@ -128,7 +128,7 @@ requests==2.32.3
     # via google-api-core, google-generativeai, openai
 rsa==4.9
     # via google-auth
-scipy==1.11.4
+scipy==1.14.1
     # via -r requirements.in
 selenium==4.15.2
     # via -r requirements.in
