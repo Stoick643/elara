@@ -1,10 +1,55 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, date
-from models import db, LifeAssessment
+from models import db, LifeAssessment, Goal, GoalTemplate
 from sqlalchemy import desc
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data.goal_templates import GOAL_TEMPLATES, get_templates_for_area, get_template_by_id
 
 assessment_bp = Blueprint('assessment', __name__)
+
+
+def generate_recommendations(assessment):
+    """Generate goal recommendations based on assessment scores."""
+    recommendations = []
+    scores_dict = assessment.get_scores_dict()
+    
+    # Find areas with scores below 5
+    low_areas = [(area, score) for area, score in scores_dict.items() if score < 5]
+    
+    # Sort by lowest score first (highest priority)
+    low_areas.sort(key=lambda x: x[1])
+    
+    # Get templates for each low area
+    for area_name, score in low_areas[:3]:  # Limit to top 3 areas needing attention
+        templates = get_templates_for_area(area_name)
+        
+        if templates:
+            # Select appropriate template based on score severity
+            if score <= 2:
+                # Critical - suggest easier templates first
+                template = next((t for t in templates if t['difficulty'] == 'easy'), templates[0])
+            elif score <= 3:
+                # High priority - suggest medium difficulty
+                template = next((t for t in templates if t['difficulty'] == 'medium'), templates[0])
+            else:
+                # Moderate - can handle any difficulty
+                template = templates[0]
+            
+            # Add template index for reference
+            template_index = GOAL_TEMPLATES.index(template)
+            recommendations.append({
+                'template_id': template_index,
+                'area': area_name,
+                'score': score,
+                'priority': 'critical' if score <= 2 else 'high' if score <= 3 else 'moderate',
+                'template': template
+            })
+    
+    return recommendations
+
 
 @assessment_bp.route('/')
 @login_required
@@ -129,11 +174,15 @@ def view_assessment(assessment_id):
     improvement_areas = assessment.get_improvement_areas()
     scores_dict = assessment.get_scores_dict()
     
+    # Generate goal recommendations
+    recommendations = generate_recommendations(assessment)
+    
     return render_template('assessment/results.html',
                          assessment=assessment,
                          balance_data=balance_data,
                          improvement_areas=improvement_areas,
                          scores_dict=scores_dict,
+                         recommendations=recommendations,
                          today=date.today())
 
 @assessment_bp.route('/history')
@@ -194,3 +243,66 @@ def delete_assessment(assessment_id):
         flash('Error deleting assessment. Please try again.', 'error')
     
     return redirect(url_for('assessment.assessment_history'))
+
+@assessment_bp.route('/create-goal-from-template', methods=['POST'])
+@login_required
+def create_goal_from_template():
+    """Create a goal from a template recommendation."""
+    try:
+        data = request.get_json()
+        template_id = data.get('template_id')
+        assessment_id = data.get('assessment_id')
+        
+        if template_id is None or assessment_id is None:
+            return jsonify({'success': False, 'message': 'Missing required data'}), 400
+        
+        # Get the template
+        template = get_template_by_id(template_id)
+        if not template:
+            return jsonify({'success': False, 'message': 'Template not found'}), 404
+        
+        # Verify assessment belongs to current user
+        assessment = LifeAssessment.query.filter_by(
+            id=assessment_id, 
+            user_id=current_user.id
+        ).first()
+        if not assessment:
+            return jsonify({'success': False, 'message': 'Assessment not found'}), 404
+        
+        # Create the goal from template
+        goal = Goal(
+            user_id=current_user.id,
+            title=template['title'],
+            description=template['description'],
+            life_area=template['life_area'],
+            from_template_id=template_id,
+            status='active',
+            priority='high' if template['difficulty'] == 'hard' else 'medium'
+        )
+        
+        # Add suggested tasks as goal tasks if they exist
+        if template.get('suggested_tasks'):
+            for task_title in template['suggested_tasks']:
+                task = {
+                    'title': task_title,
+                    'completed': False,
+                    'created_at': datetime.utcnow().isoformat()
+                }
+                # Add task to goal's task list (assuming Goal has a tasks field)
+                if not hasattr(goal, 'tasks') or goal.tasks is None:
+                    goal.tasks = []
+                goal.tasks.append(task)
+        
+        db.session.add(goal)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Goal created successfully',
+            'goal_id': goal.id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating goal from template: {e}")
+        return jsonify({'success': False, 'message': 'Server error occurred'}), 500

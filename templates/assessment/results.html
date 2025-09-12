@@ -237,6 +237,127 @@
         margin-top: 1rem;
         border-radius: 0 8px 8px 0;
     }
+
+    .recommendations-section {
+        margin-top: 2rem;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.05) 100%);
+        border: 2px solid rgba(34, 197, 94, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+    }
+
+    .recommendations-title {
+        color: #16a34a;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .recommendation-card {
+        background: white;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .recommendation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .recommendation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .recommendation-info {
+        flex: 1;
+    }
+
+    .recommendation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .recommendation-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .recommendation-area {
+        background: rgba(99, 102, 241, 0.1);
+        color: #6366f1;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .recommendation-difficulty {
+        font-weight: 500;
+    }
+
+    .difficulty-easy { color: #22c55e; }
+    .difficulty-medium { color: #f59e0b; }
+    .difficulty-hard { color: #ef4444; }
+
+    .recommendation-description {
+        color: #6b7280;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .suggestion-tasks {
+        margin-bottom: 1rem;
+    }
+
+    .tasks-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+
+    .create-goal-btn {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .create-goal-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .create-goal-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
 </style>
 {% endblock %}
 
@@ -402,6 +523,62 @@
             {% endif %}
         </div>
 
+        {% if recommendations %}
+        <!-- Goal Recommendations Section -->
+        <div class="recommendations-section">
+            <h3 class="recommendations-title">
+                <i class="bi bi-lightbulb"></i>
+                Smart Goal Recommendations
+            </h3>
+            <p class="text-muted mb-4">Based on your assessment, here are personalized goal templates to help improve your lowest-scoring areas:</p>
+            
+            {% for rec in recommendations %}
+            <div class="recommendation-card" data-template-id="{{ rec.template_id }}">
+                <div class="recommendation-header">
+                    <div class="recommendation-info">
+                        <div class="recommendation-title">{{ rec.template.title }}</div>
+                        <div class="recommendation-meta">
+                            <span class="recommendation-area">{{ rec.area }}</span>
+                            <span class="recommendation-difficulty difficulty-{{ rec.template.difficulty }}">
+                                {{ rec.template.difficulty|title }} Difficulty
+                            </span>
+                            <span>{{ rec.template.time_estimate }}</span>
+                            <span class="priority-badge priority-{{ rec.priority }}">{{ rec.priority }} Priority</span>
+                        </div>
+                        <div class="recommendation-description">
+                            {{ rec.template.description }}
+                        </div>
+                        {% if rec.template.suggested_tasks %}
+                        <div class="suggestion-tasks">
+                            <strong>Suggested Tasks:</strong>
+                            <ul class="tasks-list">
+                                {% for task in rec.template.suggested_tasks[:3] %}
+                                <li class="task-item">
+                                    <i class="bi bi-check2"></i>
+                                    <span>{{ task }}</span>
+                                </li>
+                                {% endfor %}
+                                {% if rec.template.suggested_tasks|length > 3 %}
+                                <li class="task-item">
+                                    <i class="bi bi-three-dots"></i>
+                                    <span>and {{ rec.template.suggested_tasks|length - 3 }} more tasks</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button class="create-goal-btn" onclick="createGoalFromTemplate({{ rec.template_id }}, '{{ rec.template.title }}')">
+                            <i class="bi bi-plus-circle"></i> Create Goal
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if assessment.notes %}
         <!-- Notes Display -->
         <div class="notes-display">
@@ -436,42 +613,88 @@
 
 {% block extra_js %}
 <script>
-// Goal suggestion function (placeholder for future Phase 3.2)
-function suggestGoals() {
-    const improvementAreas = {{ improvement_areas | tojson }};
-    let suggestions = [];
+// Create goal from template
+async function createGoalFromTemplate(templateId, templateTitle) {
+    const button = event.target.closest('.create-goal-btn');
+    const originalText = button.innerHTML;
     
-    improvementAreas.forEach(area => {
-        switch(area.area) {
-            case 'Career & Work':
-                suggestions.push('Set clear career development goals');
-                break;
-            case 'Health & Fitness':
-                suggestions.push('Create a sustainable exercise routine');
-                break;
-            case 'Relationships':
-                suggestions.push('Schedule regular time with loved ones');
-                break;
-            case 'Money & Finance':
-                suggestions.push('Create a budget and savings plan');
-                break;
-            case 'Personal Growth':
-                suggestions.push('Learn a new skill or take a course');
-                break;
-            case 'Fun & Recreation':
-                suggestions.push('Plan regular leisure activities');
-                break;
-            case 'Home Environment':
-                suggestions.push('Organize and improve your living space');
-                break;
-            case 'Purpose & Meaning':
-                suggestions.push('Reflect on your values and life purpose');
-                break;
+    // Show loading state
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+    button.disabled = true;
+    
+    try {
+        const response = await fetch('{{ url_for("assessment.create_goal_from_template") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                template_id: templateId,
+                assessment_id: {{ assessment.id }}
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success state
+            button.innerHTML = '<i class="bi bi-check-circle"></i> Goal Created!';
+            button.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+            
+            // Show success message
+            showNotification(`Goal "${templateTitle}" created successfully!`, 'success');
+            
+            // Optionally redirect to goals page after a delay
+            setTimeout(() => {
+                if (confirm('Goal created! Would you like to view your goals now?')) {
+                    window.location.href = '{{ url_for("goals.goals_list") }}';
+                }
+            }, 1500);
+        } else {
+            throw new Error(result.message || 'Failed to create goal');
         }
-    });
+    } catch (error) {
+        console.error('Error creating goal:', error);
+        showNotification('Failed to create goal. Please try again.', 'error');
+        
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+// Simple notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
     
-    alert('Goal Suggestions:\n\n' + suggestions.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join('\n') + 
-          '\n\nNote: Goal recommendation feature coming in Phase 3.2!');
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Legacy function for backward compatibility (if still referenced)
+function suggestGoals() {
+    // This function is now replaced by the recommendations section
+    showNotification('Goal recommendations are now displayed below your assessment results!', 'info');
 }
 
 // Animate progress bars on page load

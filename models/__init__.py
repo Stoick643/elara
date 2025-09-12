@@ -173,6 +173,7 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     value_id = db.Column(db.Integer, db.ForeignKey('values.id'), nullable=True)
+    life_area = db.Column(db.String(50), nullable=True)  # Career, Health, Relationships, etc.
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     target_date = db.Column(db.Date, nullable=True)
@@ -180,6 +181,7 @@ class Goal(db.Model):
     progress = db.Column(db.Integer, default=0)  # 0-100 percentage
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
+    from_template_id = db.Column(db.Integer, nullable=True)  # Track if goal came from template
     
     # Relationships
     tasks = db.relationship('Task', backref='goal', lazy='dynamic')
@@ -212,6 +214,36 @@ class Goal(db.Model):
     
     def __repr__(self):
         return f'<Goal {self.title} - {self.progress}%>'
+
+
+class GoalTemplate(db.Model):
+    """Pre-built goal templates for recommendations."""
+    __tablename__ = 'goal_templates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    life_area = db.Column(db.String(50), nullable=False)  # Career, Health, Relationships, etc.
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    suggested_tasks = db.Column(db.JSON, nullable=True)  # List of task suggestions
+    difficulty = db.Column(db.String(20), default='medium')  # easy, medium, hard
+    time_estimate = db.Column(db.String(50), nullable=True)  # "30 days", "3 months", etc.
+    is_active = db.Column(db.Boolean, default=True)  # Can deactivate templates
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert template to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'life_area': self.life_area,
+            'title': self.title,
+            'description': self.description,
+            'suggested_tasks': self.suggested_tasks or [],
+            'difficulty': self.difficulty,
+            'time_estimate': self.time_estimate
+        }
+    
+    def __repr__(self):
+        return f'<GoalTemplate {self.life_area}: {self.title}>'
 
 
 class Habit(db.Model):
