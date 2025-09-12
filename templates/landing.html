@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Elara - Your AI Life Coach{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-3 fw-bold mb-4">
+                    <i class="bi bi-stars"></i> Meet Elara
+                </h1>
+                <p class="lead mb-4">
+                    Your personal AI life coach that helps you set meaningful goals, 
+                    build lasting habits, and create the life you've always wanted.
+                </p>
+                <p class="h5 mb-4">
+                    Transform your daily routine into a journey of growth with intelligent 
+                    guidance tailored just for you.
+                </p>
+                <div class="d-flex gap-3 mb-4">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">
+                        <i class="bi bi-person-plus"></i> Start Your Journey
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </a>
+                </div>
+                <div class="small opacity-75">
+                    <i class="bi bi-check-circle"></i> Free to start • 
+                    <i class="bi bi-shield-check"></i> Secure & Private • 
+                    <i class="bi bi-lightning"></i> AI-Powered
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="bg-white bg-opacity-10 rounded-3 p-4 backdrop-blur">
+                    <h3 class="mb-3">Choose Your AI Coach</h3>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="bg-white bg-opacity-20 rounded-2 p-3">
+                                <div class="h2 mb-1">🧙‍♂️</div>
+                                <div class="small"><strong>The Sage</strong><br>Wise & Deep</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white bg-opacity-20 rounded-2 p-3">
+                                <div class="h2 mb-1">🏆</div>
+                                <div class="small"><strong>The Champion</strong><br>Energetic & Motivating</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white bg-opacity-20 rounded-2 p-3">
+                                <div class="h2 mb-1">🤝</div>
+                                <div class="small"><strong>The Friend</strong><br>Warm & Supportive</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-white bg-opacity-20 rounded-2 p-3">
+                                <div class="h2 mb-1">🎯</div>
+                                <div class="small"><strong>The Strategist</strong><br>Data-Driven</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Everything You Need to Thrive</h2>
+            <p class="lead text-muted">Elara combines proven psychology with AI intelligence to support your growth</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle p-3 mb-3 d-inline-block">
+                            <i class="bi bi-target display-6"></i>
+                        </div>
+                        <h4 class="card-title">Smart Goal Setting</h4>
+                        <p class="card-text">Set meaningful goals aligned with your core values. Break them down into actionable steps with AI guidance.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-success text-white rounded-circle p-3 mb-3 d-inline-block">
+                            <i class="bi bi-arrow-repeat display-6"></i>
+                        </div>
+                        <h4 class="card-title">Habit Building</h4>
+                        <p class="card-text">Build lasting habits with the proven cue-routine-reward loop. Track streaks and celebrate progress.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-info text-white rounded-circle p-3 mb-3 d-inline-block">
+                            <i class="bi bi-chat-dots display-6"></i>
+                        </div>
+                        <h4 class="card-title">AI Coaching</h4>
+                        <p class="card-text">Get personalized advice from your AI coach. Choose from 5 unique personalities that match your style.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-warning text-white rounded-circle p-3 mb-3 d-inline-block">
+                            <i class="bi bi-journal-text display-6"></i>
+                        </div>
+                        <h4 class="card-title">Daily Reflection</h4>
+                        <p class="card-text">Journal your thoughts, track your mood, and discover patterns with CBT-inspired tools.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">How Elara Works</h2>
+            <p class="lead text-muted">Simple steps to transform your life</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle p-4 mb-3 d-inline-block">
+                        <h2 class="mb-0">1</h2>
+                    </div>
+                    <h4>Choose Your Coach</h4>
+                    <p>Select an AI personality that resonates with you - from the wise Sage to the energetic Champion.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle p-4 mb-3 d-inline-block">
+                        <h2 class="mb-0">2</h2>
+                    </div>
+                    <h4>Set Your Goals</h4>
+                    <p>Define what matters most to you. Create goals that align with your values and break them into manageable steps.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle p-4 mb-3 d-inline-block">
+                        <h2 class="mb-0">3</h2>
+                    </div>
+                    <h4>Build & Track</h4>
+                    <p>Develop daily habits, journal your progress, and get personalized insights to keep you moving forward.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="display-5 fw-bold mb-3">Ready to Start Your Journey?</h2>
+                <p class="lead mb-4">
+                    Join thousands who are already transforming their lives with Elara. 
+                    Your personal AI coach is waiting to help you achieve your dreams.
+                </p>
+            </div>
+            <div class="col-lg-4 text-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-5 py-3">
+                    <i class="bi bi-rocket"></i> Get Started Free
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <p class="mb-2">
+                    <strong><i class="bi bi-stars"></i> Elara</strong> - Your AI Life Coach
+                </p>
+                <p class="text-muted small mb-0">
+                    Built with psychology-backed principles and AI intelligence to support your personal growth journey.
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-shield-check"></i> Secure & Private<br>
+                    <i class="bi bi-cpu"></i> Powered by AI
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-opacity-10 {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.bg-opacity-20 {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+</style>
+{% endblock %}

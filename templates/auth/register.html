@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Join Elara - Your AI Life Coach{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        <!-- Left side - Branding and Info -->
+        <div class="col-lg-6 bg-primary text-white d-flex align-items-center">
+            <div class="container py-5">
+                <div class="text-center">
+                    <h1 class="display-4 mb-4">
+                        <i class="bi bi-stars"></i> Welcome to Elara
+                    </h1>
+                    <p class="lead mb-4">Your Personal AI Life Coach</p>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="bi bi-target display-6 mb-2"></i>
+                                <h5>Goal Setting</h5>
+                                <p class="small">Set meaningful goals aligned with your values</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="bi bi-arrow-repeat display-6 mb-2"></i>
+                                <h5>Habit Building</h5>
+                                <p class="small">Build lasting habits with smart reminders</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="bi bi-chat-dots display-6 mb-2"></i>
+                                <h5>AI Coaching</h5>
+                                <p class="small">Get personalized guidance from your AI coach</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center">
+                                <i class="bi bi-graph-up display-6 mb-2"></i>
+                                <h5>Progress Tracking</h5>
+                                <p class="small">Monitor your growth and celebrate wins</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side - Registration Form -->
+        <div class="col-lg-6 d-flex align-items-center">
+            <div class="container py-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <h2 class="text-center mb-4">Create Your Account</h2>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" novalidate>
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="mb-3">
+                                {{ form.username.label(class="form-label") }}
+                                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                                {% if form.username.errors %}
+                                    {% for error in form.username.errors %}
+                                        <div class="invalid-feedback">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form.password.label(class="form-label") }}
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                {% if form.password.errors %}
+                                    {% for error in form.password.errors %}
+                                        <div class="invalid-feedback">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form.confirm_password.label(class="form-label") }}
+                                {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                                {% if form.confirm_password.errors %}
+                                    {% for error in form.confirm_password.errors %}
+                                        <div class="invalid-feedback">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                {{ form.avatar_personality.label(class="form-label") }}
+                                <div class="row g-2">
+                                    {% for value, label in form.avatar_personality.choices %}
+                                        <div class="col-12">
+                                            <input type="radio" class="btn-check" name="avatar_personality" id="{{ value }}" value="{{ value }}" {% if form.avatar_personality.data == value %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary text-start w-100 p-3" for="{{ value }}">
+                                                <strong>{{ label.split(' - ')[0] }}</strong><br>
+                                                <small class="text-muted">{{ label.split(' - ')[1] if ' - ' in label else '' }}</small>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if form.avatar_personality.errors %}
+                                    {% for error in form.avatar_personality.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="d-grid gap-2 mb-3">
+                                {{ form.submit(class="btn btn-primary btn-lg") }}
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-muted">
+                                    Already have an account? 
+                                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Sign in here</a>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

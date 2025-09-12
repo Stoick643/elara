@@ -44,9 +44,13 @@
                 </form>
                 
                 <div class="text-center mt-4">
+                    <p class="text-muted mb-2">
+                        Don't have an account? 
+                        <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Create one here</a>
+                    </p>
                     <small class="text-muted">
                         <i class="bi bi-info-circle"></i> 
-                        Default: me / elara2024
+                        Demo account: me / elara2024
                     </small>
                 </div>
             </div>
