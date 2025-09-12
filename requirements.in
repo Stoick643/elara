@@ -21,7 +21,7 @@ markdown==3.6
 
 # LLM Integration
 google-generativeai==0.3.2
-openai==1.12.0
+openai==1.58.1
 
 # Production Server
 gunicorn==21.2.0  # WSGI server for production deployment
