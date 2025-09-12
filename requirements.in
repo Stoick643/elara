@@ -31,7 +31,7 @@ openai==1.12.0
 
 # Background Tasks & Analysis
 APScheduler==3.10.4
-pandas==2.1.4
+pandas==2.2.3
 scipy==1.11.4
 
 # Production Server
