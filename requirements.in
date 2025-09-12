@@ -6,6 +6,7 @@ Flask-WTF==1.2.1
 
 # Database
 SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9  # PostgreSQL adapter for production
 
 # Security
 Werkzeug==3.0.1
@@ -32,3 +33,6 @@ openai==1.12.0
 APScheduler==3.10.4
 pandas==2.1.4
 scipy==1.11.4
+
+# Production Server
+gunicorn==21.2.0  # WSGI server for production deployment

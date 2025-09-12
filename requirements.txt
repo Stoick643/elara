@@ -22,6 +22,8 @@ flask-sqlalchemy==3.1.1
     # via -r requirements.in
 flask-wtf==1.2.1
     # via -r requirements.in
+gunicorn==21.2.0
+    # via -r requirements.in
 itsdangerous==2.2.0
     # via
     #   flask
@@ -33,6 +35,8 @@ markupsafe==3.0.2
     #   jinja2
     #   werkzeug
     #   wtforms
+psycopg2-binary==2.9.9
+    # via -r requirements.in
 python-dateutil==2.8.2
     # via -r requirements.in
 python-dotenv==1.0.0
