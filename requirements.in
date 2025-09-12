@@ -6,7 +6,7 @@ Flask-WTF==1.2.1
 
 # Database
 SQLAlchemy==2.0.36
-psycopg2-binary==2.9.9  # PostgreSQL adapter for production
+psycopg2-binary==2.9.10  # PostgreSQL adapter for production
 
 # Security
 Werkzeug==3.0.1
