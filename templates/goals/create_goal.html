@@ -43,7 +43,8 @@
                         <div class="form-text">Why is this goal important to you?</div>
                     </div>
                     
-                    <!-- Life Area/Value -->
+                    {% if current_user.is_pro_mode %}
+                    <!-- Life Area/Value (Pro Only) -->
                     <div class="mb-3">
                         {{ form.value_id.label(class="form-label") }}
                         {{ form.value_id(class="form-select") }}
@@ -56,8 +57,10 @@
                         {% endif %}
                         <div class="form-text">Connect this goal to what matters most to you</div>
                     </div>
+                    {% endif %}
                     
-                    <!-- Target Date -->
+                    {% if current_user.is_pro_mode %}
+                    <!-- Target Date (Pro Only) -->
                     <div class="mb-3">
                         {{ form.target_date.label(class="form-label") }}
                         {{ form.target_date(class="form-control") }}
@@ -71,7 +74,7 @@
                         <div class="form-text">Having a deadline increases commitment</div>
                     </div>
                     
-                    <!-- Status -->
+                    <!-- Status (Pro Only) -->
                     <div class="mb-4">
                         {{ form.status.label(class="form-label") }}
                         {{ form.status(class="form-select") }}
@@ -83,12 +86,17 @@
                             </div>
                         {% endif %}
                     </div>
+                    {% else %}
+                    <div class="mb-4"></div>
+                    {% endif %}
                     
-                    <!-- Psychology Tip -->
+                    {% if current_user.is_pro_mode %}
+                    <!-- Psychology Tip (Pro Only) -->
                     <div class="alert alert-info">
                         <i class="bi bi-lightbulb"></i>
                         <strong>Goal Success Tip:</strong> Research shows goals that are specific, challenging, and personally meaningful have the highest success rates.
                     </div>
+                    {% endif %}
                     
                     <!-- Actions -->
                     <div class="d-flex gap-2">
@@ -99,7 +107,8 @@
             </div>
         </div>
         
-        <!-- Next Steps Preview -->
+        {% if current_user.is_pro_mode %}
+        <!-- Next Steps Preview (Pro Only) -->
         <div class="card mt-4">
             <div class="card-body">
                 <h6 class="text-muted">What happens next?</h6>
@@ -110,6 +119,13 @@
                 </ul>
             </div>
         </div>
+        {% else %}
+        <!-- Simple Mode: Upgrade Prompt -->
+        <div class="mt-4">
+            {% include 'components/upgrade_prompt.html' with context %}
+            {% set feature_description = "Get advanced goal planning tools, task breakdown, and progress insights." %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

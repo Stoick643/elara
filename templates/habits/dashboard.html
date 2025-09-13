@@ -18,9 +18,11 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title">{{ habit.name }}</h5>
+                        {% if current_user.is_pro_mode %}
                         <span class="badge bg-{{ 'warning' if habit.active else 'secondary' }}">
                             {{ 'Active' if habit.active else 'Paused' }}
                         </span>
+                        {% endif %}
                     </div>
                     
                     {% if habit.description %}
@@ -34,7 +36,8 @@
                         <small class="text-muted">{{ habit.frequency|capitalize }} habit</small>
                     </div>
                     
-                    <!-- Habit Structure -->
+                    {% if current_user.is_pro_mode %}
+                    <!-- Habit Structure (Pro Only) -->
                     <div class="mb-3">
                         <div class="row text-center">
                             <div class="col-4">
@@ -51,6 +54,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     
                     <!-- Today's Check-in -->
                     <div class="mb-3">
@@ -67,13 +71,15 @@
                     </div>
                     
                     <div class="d-flex gap-2">
+                        {% if current_user.is_pro_mode %}
                         <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" 
                            class="btn btn-outline-primary btn-sm flex-grow-1">
                             View Details
                         </a>
+                        {% endif %}
                         <a href="{{ url_for('habits.edit_habit', habit_id=habit.id) }}" 
-                           class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-pencil"></i>
+                           class="btn btn-outline-secondary btn-sm {% if not current_user.is_pro_mode %}flex-grow-1{% endif %}">
+                            <i class="bi bi-pencil"></i> {% if not current_user.is_pro_mode %}Edit{% endif %}
                         </a>
                     </div>
                 </div>

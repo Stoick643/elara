@@ -161,7 +161,8 @@
         </div>
     </div>
     
-    <!-- Weekly Progress -->
+    {% if current_user.is_pro_mode %}
+    <!-- Weekly Progress (Pro Only) -->
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header bg-info text-white">
@@ -184,7 +185,7 @@
         </div>
     </div>
     
-    <!-- Mood Trend -->
+    <!-- Mood Trend (Pro Only) -->
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header bg-warning text-dark">
@@ -212,7 +213,7 @@
         </div>
     </div>
     
-    <!-- Life Balance Widget -->
+    <!-- Life Balance Widget (Pro Only) -->
     <div class="col-lg-4 col-md-6">
         <div class="card h-100">
             <div class="card-header bg-primary text-white">
@@ -236,6 +237,17 @@
             </div>
         </div>
     </div>
+    {% else %}
+    <!-- Simple Mode: Upgrade Prompts -->
+    <div class="col-md-6">
+        {% include 'components/upgrade_prompt.html' with context %}
+        {% set feature_description = "Track your weekly progress with detailed analytics and completion trends." %}
+    </div>
+    <div class="col-md-6">
+        {% include 'components/upgrade_prompt.html' with context %}
+        {% set feature_description = "Monitor your mood patterns and emotional trends over time." %}
+    </div>
+    {% endif %}
 </div>
 
 <!-- Quick Mood Check Modal -->

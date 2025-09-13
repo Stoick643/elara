@@ -1,0 +1,20 @@
+<!-- Upgrade to Pro Mode Prompt Component -->
+<div class="card border-warning bg-warning bg-opacity-10">
+    <div class="card-body text-center py-3">
+        <div class="d-flex align-items-center justify-content-center mb-2">
+            <i class="bi bi-star-fill text-warning me-2"></i>
+            <h6 class="mb-0">Unlock Pro Features</h6>
+        </div>
+        <p class="small text-muted mb-3">
+            {% if feature_description %}{{ feature_description }}{% else %}Get advanced analytics, detailed insights, and powerful planning tools.{% endif %}
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+            <button class="btn btn-warning btn-sm" onclick="toggleModeFromNav()">
+                <i class="bi bi-arrow-up-circle"></i> Enable Pro Mode
+            </button>
+            <a href="{{ url_for('settings.settings_home') }}" class="btn btn-outline-secondary btn-sm">
+                Learn More
+            </a>
+        </div>
+    </div>
+</div>
