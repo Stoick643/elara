@@ -22,7 +22,7 @@
                                 <i class="bi bi-emoji-smile"></i> How's your mood?
                             </label>
                             <div class="d-flex align-items-center">
-                                {{ form.mood_score(class="form-range flex-grow-1", min="1", max="10", step="1", id="moodSlider") }}
+                                {{ form.mood_score(type="range", class="form-range flex-grow-1", min="1", max="10", step="1", id="moodSlider") }}
                                 <span class="ms-3 fs-3" id="moodEmoji">😐</span>
                             </div>
                             <small class="text-muted">Current: <span id="moodValue">5</span>/10</small>
@@ -33,7 +33,7 @@
                                 <i class="bi bi-lightning"></i> Energy level?
                             </label>
                             <div class="d-flex align-items-center">
-                                {{ form.energy_level(class="form-range flex-grow-1", min="1", max="10", step="1", id="energySlider") }}
+                                {{ form.energy_level(type="range", class="form-range flex-grow-1", min="1", max="10", step="1", id="energySlider") }}
                                 <span class="ms-3 fs-3" id="energyEmoji">⚡</span>
                             </div>
                             <small class="text-muted">Current: <span id="energyValue">5</span>/10</small>
@@ -111,19 +111,31 @@ const energyEmojis = {
     6: "⚡", 7: "⚡", 8: "⚡", 9: "🔥", 10: "🚀"
 };
 
-// Update mood emoji and value
-document.getElementById('moodSlider').addEventListener('input', function() {
-    const value = this.value;
-    document.getElementById('moodValue').textContent = value;
-    document.getElementById('moodEmoji').textContent = moodEmojis[value];
-});
+// Update mood emoji and value - with safety checks
+const moodSliderElement = document.getElementById('moodSlider');
+if (moodSliderElement) {
+    moodSliderElement.addEventListener('input', function() {
+        const value = this.value;
+        const moodValueElement = document.getElementById('moodValue');
+        const moodEmojiElement = document.getElementById('moodEmoji');
+        
+        if (moodValueElement) moodValueElement.textContent = value;
+        if (moodEmojiElement) moodEmojiElement.textContent = moodEmojis[value] || '😐';
+    });
+}
 
-// Update energy emoji and value
-document.getElementById('energySlider').addEventListener('input', function() {
-    const value = this.value;
-    document.getElementById('energyValue').textContent = value;
-    document.getElementById('energyEmoji').textContent = energyEmojis[value];
-});
+// Update energy emoji and value - with safety checks
+const energySliderElement = document.getElementById('energySlider');
+if (energySliderElement) {
+    energySliderElement.addEventListener('input', function() {
+        const value = this.value;
+        const energyValueElement = document.getElementById('energyValue');
+        const energyEmojiElement = document.getElementById('energyEmoji');
+        
+        if (energyValueElement) energyValueElement.textContent = value;
+        if (energyEmojiElement) energyEmojiElement.textContent = energyEmojis[value] || '⚡';
+    });
+}
 
 // Character counter
 document.getElementById('journalContent').addEventListener('input', function() {
@@ -189,10 +201,28 @@ document.getElementById('journalContent').addEventListener('input', function() {
     }
 });
 
-// Initialize sliders with default values
-document.getElementById('moodValue').textContent = document.getElementById('moodSlider').value;
-document.getElementById('moodEmoji').textContent = moodEmojis[document.getElementById('moodSlider').value];
-document.getElementById('energyValue').textContent = document.getElementById('energySlider').value;
-document.getElementById('energyEmoji').textContent = energyEmojis[document.getElementById('energySlider').value];
+// Initialize sliders with default values - with proper DOM ready check
+document.addEventListener('DOMContentLoaded', function() {
+    const moodSlider = document.getElementById('moodSlider');
+    const energySlider = document.getElementById('energySlider');
+    const moodValue = document.getElementById('moodValue');
+    const energyValue = document.getElementById('energyValue');
+    const moodEmoji = document.getElementById('moodEmoji');
+    const energyEmoji = document.getElementById('energyEmoji');
+    
+    // Initialize mood slider
+    if (moodSlider && moodValue && moodEmoji) {
+        const initialMoodValue = moodSlider.value || '5';
+        moodValue.textContent = initialMoodValue;
+        moodEmoji.textContent = moodEmojis[initialMoodValue] || '😐';
+    }
+    
+    // Initialize energy slider
+    if (energySlider && energyValue && energyEmoji) {
+        const initialEnergyValue = energySlider.value || '5';
+        energyValue.textContent = initialEnergyValue;
+        energyEmoji.textContent = energyEmojis[initialEnergyValue] || '⚡';
+    }
+});
 </script>
 {% endblock %}

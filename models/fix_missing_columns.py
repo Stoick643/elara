@@ -1,62 +1,52 @@
 """
-Emergency migration script to add missing columns to existing database.
-This fixes the error: no such column: users.onboarding_completed
+DEPRECATED: This script has been replaced by the unified database manager.
+
+This script was used to fix missing columns in the database schema.
+Please use the new unified database management system instead.
+
+For database migrations, use:
+    python -m models.db_manager migrate
+
+For a complete database reset with schema updates:
+    python -m models.db_manager reset
+
+For more options:
+    python -m models.db_manager
 """
-import sqlite3
+
+import sys
 import os
 
-def add_missing_columns():
-    """Add the new onboarding and pro mode columns to existing database."""
+def show_deprecation_notice():
+    """Show deprecation notice and redirect to new system."""
+    print("[DEPRECATED] This script has been replaced!")
+    print("")
+    print("Please use the unified database manager instead:")
+    print("  python -m models.db_manager migrate     # Apply schema updates")
+    print("  python -m models.db_manager reset       # Complete reset")
+    print("  python -m models.db_manager status      # Check database status")
+    print("")
+    print("For more options, run:")
+    print("  python -m models.db_manager")
+    print("")
     
-    # Try both possible database locations
-    db_paths = ['instance/database.db', 'data/elara.db', 'database.db']
-    db_path = None
-    
-    for path in db_paths:
-        if os.path.exists(path):
-            db_path = path
-            print(f"Found database at: {path}")
-            break
-    
-    if not db_path:
-        print("[ERROR] No database found! Run the app first to create one.")
-        return
-    
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    try:
-        # Check which columns already exist
-        cursor.execute("PRAGMA table_info(users)")
-        existing_columns = [column[1] for column in cursor.fetchall()]
-        print(f"Existing columns: {existing_columns}")
+    # Offer to run migration automatically
+    response = input("Would you like me to run the migration now? (y/N): ")
+    if response.lower().startswith('y'):
+        print("\nRunning migration with unified database manager...")
+        # Add parent directory to path for imports
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        # Add missing columns one by one
-        columns_to_add = [
-            ('onboarding_completed', 'BOOLEAN DEFAULT 0'),
-            ('onboarding_step', 'INTEGER DEFAULT 0'),
-            ('is_pro_mode', 'BOOLEAN DEFAULT 0')
-        ]
-        
-        for column_name, column_def in columns_to_add:
-            if column_name not in existing_columns:
-                try:
-                    cursor.execute(f'ALTER TABLE users ADD COLUMN {column_name} {column_def}')
-                    print(f"[OK] Added column: {column_name}")
-                except sqlite3.OperationalError as e:
-                    print(f"[WARNING] Could not add {column_name}: {e}")
+        try:
+            from models.db_manager import DatabaseManager
+            db_manager = DatabaseManager()
+            if db_manager.migrate_database():
+                print("Migration completed successfully!")
             else:
-                print(f"[INFO] Column {column_name} already exists")
-        
-        conn.commit()
-        print("\n[SUCCESS] Database schema updated successfully!")
-        print("You can now run the application without errors.")
-        
-    except Exception as e:
-        conn.rollback()
-        print(f"[ERROR] Error updating database: {e}")
-    finally:
-        conn.close()
+                print("Migration failed. Please check the error messages above.")
+        except Exception as e:
+            print(f"Error running migration: {e}")
+            print("Please run: python -m models.db_manager migrate")
 
 if __name__ == '__main__':
-    add_missing_columns()
+    show_deprecation_notice()

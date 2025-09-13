@@ -346,12 +346,13 @@
                                     }) %}
                                 {% endif %}
                                 
-                                {% for entry in day_data.get('journal_entries', [])[:1] %}
+                                {% for entry in day_data.get('journal_entries', []) %}
                                     {% set _ = all_activities.append({
                                         'type': 'journal',
                                         'title': 'Journal entry',
                                         'mood': entry.get_mood_emoji() if entry.mood_score else '',
-                                        'url': url_for('journal.journal'),
+                                        'id': entry.id,
+                                        'url': url_for('journal.view_entry', entry_id=entry.id),
                                         'priority': 2
                                     }) %}
                                 {% endfor %}
@@ -595,7 +596,7 @@ function renderDayContent(data) {
         html += '<div class="mb-4"><h6><i class="bi bi-journal-text"></i> Journal</h6>';
         data.journal_entries.forEach(entry => {
             const moodEmoji = entry.mood_score >= 7 ? '😊' : entry.mood_score >= 5 ? '😐' : '😔';
-            html += `<div class="card card-body bg-light mb-2">
+            html += `<div class="card card-body bg-light mb-2" style="cursor: pointer;" onclick="window.location.href='/journal/entry/${entry.id}'">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <small class="text-muted">Journal Entry</small>
                     <span>${moodEmoji} ${entry.mood_score}/10</span>
