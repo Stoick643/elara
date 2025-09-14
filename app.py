@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from models import db, User
 from config import config
 
@@ -15,7 +16,10 @@ def create_app(config_name=None):
     
     # Initialize extensions
     db.init_app(app)
-    
+
+    # Initialize Flask-Migrate for database migrations
+    migrate = Migrate(app, db)
+
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)

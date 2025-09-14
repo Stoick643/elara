@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)",
-      "Bash(git add:*)",
-      "Bash(del *.db)"
+      "Bash(pip-compile:*)"
     ],
     "deny": [],
     "ask": []

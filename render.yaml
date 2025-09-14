@@ -5,8 +5,8 @@ services:
     region: oregon  # optional, defaults to oregon
     plan: free  # or "starter" for paid
     
-    # Build configuration
-    buildCommand: pip install -r requirements.txt
+    # Build configuration with database migrations
+    buildCommand: chmod +x build.sh && ./build.sh
     
     # Start command for production
     startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT

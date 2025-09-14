@@ -54,7 +54,7 @@ Eight life dimensions for self-assessment:
 
 ### Core Technologies
 - **Backend**: Flask (Python)
-- **Database**: SQLite with SQLAlchemy ORM
+- **Database**: SQLite (dev) / PostgreSQL (prod) with SQLAlchemy ORM + Flask-Migrate
 - **Frontend**: HTML templates with Bootstrap
 - **Authentication**: Flask-Login (single user)
 - **AI Integration**: DeepSeek API (cost-effective alternative to Gemini)
@@ -262,10 +262,13 @@ pip-sync requirements.txt
 # Run development server
 flask run --debug
 
-# Initialize database
-flask db init
-flask db migrate
-flask db upgrade
+# Database migrations (using Flask-Migrate)
+flask db init                                # Initialize migrations (one-time)
+flask db migrate -m "Description"           # Generate new migration
+flask db upgrade                            # Apply pending migrations
+flask db downgrade                          # Rollback last migration
+flask db current                            # Show current revision
+flask db history                            # View migration history
 
 # Run tests
 pytest
