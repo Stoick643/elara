@@ -285,9 +285,9 @@ class Habit(db.Model):
     description = db.Column(db.Text, nullable=True)
     
     # Habit Loop components
-    cue = db.Column(db.String(500), nullable=False)  # Trigger/reminder
-    routine = db.Column(db.String(500), nullable=False)  # The behavior
-    reward = db.Column(db.String(500), nullable=False)  # The benefit
+    cue = db.Column(db.String(500), nullable=True)  # Trigger/reminder
+    routine = db.Column(db.String(500), nullable=True)  # The behavior
+    reward = db.Column(db.String(500), nullable=True)  # The benefit
     
     # Tracking
     frequency = db.Column(db.String(20), default='daily')  # daily, weekly

@@ -70,3 +70,9 @@ node_modules/
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
+
+# Personal notes and journals (may contain credentials)
+elara-journal.txt
+
+# Claude Code local settings
+.claude/settings.local.json

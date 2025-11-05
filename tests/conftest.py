@@ -2,6 +2,7 @@ import pytest
 import tempfile
 import os
 from datetime import date, datetime, timedelta
+from sqlalchemy.orm import make_transient
 from app import create_app
 from models import db, User, Goal, Task, Habit, HabitLog, Value
 
@@ -48,6 +49,11 @@ def test_user(app):
         user.avatar_personality = "friend"
         db.session.add(user)
         db.session.commit()
+        # Make transient so tests can reattach to their sessions
+        user_id = user.id
+        db.session.expunge(user)
+        make_transient(user)
+        user.id = user_id  # Restore ID after making transient
         return user
 
 @pytest.fixture
@@ -62,6 +68,11 @@ def test_value(app, test_user):
         )
         db.session.add(value)
         db.session.commit()
+        # Make transient so tests can reattach to their sessions
+        value_id = value.id
+        db.session.expunge(value)
+        make_transient(value)
+        value.id = value_id  # Restore ID after making transient
         return value
 
 @pytest.fixture
@@ -78,6 +89,11 @@ def test_goal(app, test_user, test_value):
         )
         db.session.add(goal)
         db.session.commit()
+        # Make transient so tests can reattach to their sessions
+        goal_id = goal.id
+        db.session.expunge(goal)
+        make_transient(goal)
+        goal.id = goal_id  # Restore ID after making transient
         return goal
 
 @pytest.fixture
@@ -95,4 +111,9 @@ def test_habit(app, test_user):
         )
         db.session.add(habit)
         db.session.commit()
+        # Make transient so tests can reattach to their sessions
+        habit_id = habit.id
+        db.session.expunge(habit)
+        make_transient(habit)
+        habit.id = habit_id  # Restore ID after making transient
         return habit
