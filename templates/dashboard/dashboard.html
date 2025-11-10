@@ -60,7 +60,7 @@
 
                 <!-- Actions Zone -->
                 <div class="ai-actions-container">
-                    <button class="btn btn-sm btn-outline-primary" onclick="quickMoodCheck()">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="quickMoodCheck()">
                         <i class="bi bi-emoji-smile"></i> Quick Mood
                     </button>
                     <a href="{{ url_for('chat.chat_interface') }}" class="btn btn-sm btn-primary">
@@ -70,7 +70,7 @@
                             onclick="refreshAIMessage()"
                             id="refresh-btn"
                             {% if is_message_fresh %}disabled{% endif %}>
-                        <i class="fas fa-sync-alt"></i>
+                        <i class="bi bi-arrow-clockwise"></i>
                         <span class="spinner-border spinner-border-sm d-none" id="refresh-spinner"></span>
                     </button>
                 </div>
@@ -97,7 +97,7 @@
                             <strong class="small">{{ goal.title }}</strong>
                             <span class="badge bg-success">{{ goal.progress }}%</span>
                         </div>
-                        <div class="progress mt-1" style="height: 6px;">
+                        <div class="progress progress-sm mt-1">
                             <div class="progress-bar bg-success" style="width: {{ goal.progress }}%"></div>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                 {% endif %}
                 <div class="mt-3 d-grid">
                     <a href="{{ url_for('goals.goals_list') }}" class="btn btn-success btn-sm">
-                        <i class="bi bi-plus"></i> Manage Goals
+                        <i class="bi bi-plus-circle"></i> Manage Goals
                     </a>
                 </div>
             </div>
@@ -126,12 +126,14 @@
                 {% if habits_today %}
                     {% for habit_data in habits_today %}
                     <div class="d-flex align-items-center mb-2">
-                        <input type="checkbox" 
-                               class="form-check-input me-2" 
+                        <input type="checkbox"
+                               class="form-check-input me-2"
                                {% if habit_data.completed %}checked disabled{% endif %}
                                {% if habit_data.can_complete %}onclick="checkInHabit({{ habit_data.habit.id }})"{% endif %}>
                         <span class="flex-grow-1">{{ habit_data.habit.name }}</span>
-                        <span class="badge bg-warning text-dark">{{ habit_data.habit.streak_count }}🔥</span>
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-fire"></i> {{ habit_data.habit.streak_count }}
+                        </span>
                     </div>
                     {% endfor %}
                     <div class="mt-3">
@@ -142,7 +144,7 @@
                 {% endif %}
                 <div class="mt-3 d-grid">
                     <a href="{{ url_for('habits.habits_dashboard') }}" class="btn btn-warning btn-sm">
-                        <i class="bi bi-plus"></i> Manage Habits
+                        <i class="bi bi-plus-circle"></i> Manage Habits
                     </a>
                 </div>
             </div>
@@ -185,7 +187,7 @@
     <!-- Recent Journal -->
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-journal-text"></i> Recent Journal
                 </h5>
@@ -203,14 +205,14 @@
                         </span>
                     </div>
                     <p class="mb-3">{{ recent_journal.content[:200] }}{% if recent_journal.content|length > 200 %}...{% endif %}</p>
-                    <a href="{{ url_for('journal.view_entry', entry_id=recent_journal.id) }}" class="btn btn-sm btn-outline-success">
+                    <a href="{{ url_for('journal.view_entry', entry_id=recent_journal.id) }}" class="btn btn-sm btn-outline-info">
                         Read Full Entry
                     </a>
                 {% else %}
                     <p class="text-muted text-center">No journal entries yet.</p>
                 {% endif %}
                 <div class="mt-3 d-grid">
-                    <a href="{{ url_for('journal.journal') }}" class="btn btn-success">
+                    <a href="{{ url_for('journal.journal') }}" class="btn btn-info">
                         <i class="bi bi-pencil"></i> Write Now
                     </a>
                 </div>
@@ -222,14 +224,14 @@
     <!-- Weekly Progress (Pro Only) -->
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-graph-up"></i> Weekly Progress
                 </h5>
             </div>
             <div class="card-body">
-                <div class="progress mb-3" style="height: 30px;">
-                    <div class="progress-bar bg-info" role="progressbar" 
+                <div class="progress progress-lg mb-3">
+                    <div class="progress-bar bg-secondary" role="progressbar"
                          style="width: {{ week_progress }}%"
                          aria-valuenow="{{ week_progress }}" aria-valuemin="0" aria-valuemax="100">
                         {{ week_progress|round|int }}%
@@ -241,11 +243,11 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Mood Trend (Pro Only) -->
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-warning text-dark">
+            <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-emoji-smile"></i> Mood Trend
                 </h5>
@@ -269,11 +271,11 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Life Balance Widget (Pro Only) -->
     <div class="col-lg-4 col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-pie-chart"></i> Life Balance
                 </h5>
@@ -281,13 +283,13 @@
             <div class="card-body">
                 <div id="lifeBalanceContent">
                     <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
+                        <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
                 </div>
                 <div class="mt-3 d-grid">
-                    <a href="{{ url_for('assessment.assessment_home') }}" class="btn btn-primary">
+                    <a href="{{ url_for('assessment.assessment_home') }}" class="btn btn-info">
                         <i class="bi bi-plus-circle"></i> Take Assessment
                     </a>
                 </div>
@@ -419,7 +421,7 @@ async function addQuickTask(input) {
             const data = await response.json();
             input.value = '';
             // Show success briefly
-            input.placeholder = '✓ Task added!';
+            input.placeholder = 'Task added!';
             setTimeout(() => {
                 input.placeholder = '+ Add quick task';
                 location.reload(); // Refresh to show new task
@@ -526,7 +528,7 @@ async function refreshAIMessage() {
     const messageContent = document.getElementById('ai-message-content');
     const messageTime = document.getElementById('ai-message-time');
     const spinner = document.getElementById('refresh-spinner');
-    const icon = refreshBtn.querySelector('.fa-sync-alt');
+    const icon = refreshBtn.querySelector('.bi-arrow-clockwise');
 
     // Disable button and show loading
     refreshBtn.disabled = true;

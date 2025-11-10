@@ -344,3 +344,17 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
     background: #6B7280;
 }
+
+/* Progress Bar Utilities */
+.progress-sm {
+    height: 6px;
+}
+
+.progress-lg {
+    height: 30px;
+}
+
+.progress-lg .progress-bar {
+    font-size: 0.875rem;
+    line-height: 30px;
+}
