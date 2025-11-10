@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, jsonify, request
+from flask import Blueprint, render_template, redirect, url_for, jsonify, request, session
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta, date
 from models import db, Task, JournalEntry, Goal, Habit, Value
@@ -13,10 +13,10 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def dashboard():
     """Main dashboard view with comprehensive life coaching features."""
     today = datetime.utcnow().date()
-    
-    # Redirect to avatar selection if not set (temporarily disabled for testing)
-    # if not current_user.avatar_personality:
-    #     return redirect(url_for('avatar.select_personality'))
+
+    # Redirect to avatar selection if not set
+    if not current_user.avatar_personality:
+        return redirect(url_for('avatar.select_personality'))
     
     # Get today's tasks (limit 5 for HCI principles)
     todays_tasks = Task.query.filter_by(
@@ -100,7 +100,40 @@ def dashboard():
     completed_habits_count = sum(1 for h in habits_today if h['completed'])
     habit_completion_rate = (completed_habits_count / len(habits_today) * 100) if habits_today else 0
     
-    # Get personality-based welcome message
+    # Get AI-generated daily message (with session caching)
+    ai_message = None
+    message_timestamp = None
+    is_message_fresh = False
+
+    # Check session cache for AI message
+    if 'ai_dashboard_message' in session and 'ai_message_timestamp' in session:
+        cached_timestamp = datetime.fromisoformat(session['ai_message_timestamp'])
+        # Cache for 6 hours
+        if (datetime.utcnow() - cached_timestamp).total_seconds() < 6 * 3600:
+            ai_message = session['ai_dashboard_message']
+            message_timestamp = cached_timestamp
+            is_message_fresh = (datetime.utcnow() - cached_timestamp).total_seconds() < 3600
+
+    # Generate new message if not cached or expired
+    if not ai_message:
+        try:
+            ai_coach = AICoach()
+            message_data = ai_coach.generate_daily_dashboard_message(current_user.id)
+            ai_message = message_data['message']
+            message_timestamp = message_data['timestamp']
+            is_message_fresh = True
+
+            # Cache in session
+            session['ai_dashboard_message'] = ai_message
+            session['ai_message_timestamp'] = message_timestamp.isoformat()
+            session['ai_message_personality'] = message_data['personality']
+        except Exception as e:
+            # Fallback to simple personality message if AI fails
+            ai_message = get_personality_message_for_context(current_user, 'welcome')
+            message_timestamp = datetime.utcnow()
+            is_message_fresh = True
+
+    # Get personality-based welcome message (kept for backwards compatibility)
     personality_message = get_personality_message_for_context(current_user, 'welcome')
     
     # Get upcoming deadlines (goals and tasks)
@@ -166,7 +199,7 @@ def dashboard():
                          completed_this_week=completed_this_week,
                          mood_trend=mood_trend,
                          avg_mood=round(avg_mood, 1),
-                         
+
                          # New Phase 2 data
                          active_goals=active_goals,
                          habits_today=habits_today,
@@ -175,12 +208,17 @@ def dashboard():
                          upcoming_deadlines=upcoming_deadlines,
                          life_balance=life_balance,
                          today=today,
-                         
+
                          # Phase 3: Discovery & Alignment
                          discovery_progress=discovery_progress,
                          orphaned_tasks=orphaned_tasks,
                          orphaned_count=orphaned_count,
-                         show_discovery_prompt=show_discovery_prompt)
+                         show_discovery_prompt=show_discovery_prompt,
+
+                         # AI Coach message
+                         ai_message=ai_message,
+                         message_timestamp=message_timestamp,
+                         is_message_fresh=is_message_fresh)
 
 @dashboard_bp.route('/api/complete-task/<int:task_id>', methods=['POST'])
 @login_required
@@ -431,15 +469,58 @@ def get_ai_task_suggestions():
     try:
         ai_coach = AICoach()
         suggestions = ai_coach.suggest_task_goal_connections(current_user.id)
-        
+
         return jsonify({
             'success': True,
             'suggestions': suggestions
         })
-        
+
     except Exception as e:
         return jsonify({
             'success': False,
             'message': 'Unable to generate AI suggestions',
+            'error': str(e)
+        }), 500
+
+
+@dashboard_bp.route('/api/ai/refresh-daily-message', methods=['POST'])
+@login_required
+def refresh_daily_message():
+    """Refresh the AI daily message (rate limited to once per hour)."""
+    # Check if message was refreshed recently (within 1 hour)
+    if 'ai_message_last_refresh' in session:
+        last_refresh = datetime.fromisoformat(session['ai_message_last_refresh'])
+        seconds_since_refresh = (datetime.utcnow() - last_refresh).total_seconds()
+
+        if seconds_since_refresh < 3600:  # 1 hour = 3600 seconds
+            minutes_remaining = int((3600 - seconds_since_refresh) / 60)
+            return jsonify({
+                'success': False,
+                'message': f'Please wait {minutes_remaining} more minute(s) before refreshing again.',
+                'wait_time': minutes_remaining
+            }), 429  # Too Many Requests
+
+    try:
+        ai_coach = AICoach()
+        message_data = ai_coach.generate_daily_dashboard_message(current_user.id)
+
+        # Update session cache
+        session['ai_dashboard_message'] = message_data['message']
+        session['ai_message_timestamp'] = message_data['timestamp'].isoformat()
+        session['ai_message_personality'] = message_data['personality']
+        session['ai_message_last_refresh'] = datetime.utcnow().isoformat()
+
+        return jsonify({
+            'success': True,
+            'message': message_data['message'],
+            'timestamp': message_data['timestamp'].isoformat(),
+            'personality': message_data['personality'],
+            'is_fresh': True
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'Unable to generate new message. Please try again later.',
             'error': str(e)
         }), 500

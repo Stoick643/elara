@@ -2,19 +2,76 @@
 
 {% block title %}Dashboard - Elara{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai-welcome-card.css') }}">
+{% endblock %}
+
 {% block content %}
-<!-- Welcome Section -->
+<!-- AI Coach Welcome Card -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card bg-gradient-primary text-white">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="h4 mb-0">Welcome back!</h2>
-                    <p class="mb-0">{{ current_user.username | capitalize }}, let's make today count!</p>
+        <div class="ai-welcome-card personality-{{ current_user.avatar_personality or 'friend' }}">
+            <div class="ai-welcome-body">
+                <!-- Avatar Zone -->
+                <div class="ai-avatar-container">
+                    <div class="ai-avatar">
+                        {% if current_user.avatar_personality == 'sage' %}
+                            <i class="fas fa-hat-wizard"></i>
+                        {% elif current_user.avatar_personality == 'champion' %}
+                            <i class="fas fa-trophy"></i>
+                        {% elif current_user.avatar_personality == 'strategist' %}
+                            <i class="fas fa-chess-knight"></i>
+                        {% elif current_user.avatar_personality == 'zen_master' %}
+                            <i class="fas fa-spa"></i>
+                        {% else %}
+                            <i class="fas fa-heart"></i>
+                        {% endif %}
+                        <!-- Status indicator -->
+                        <div class="ai-status-badge {% if is_message_fresh %}status-active{% endif %}"></div>
+                    </div>
+                    <div class="ai-avatar-label">
+                        {% if current_user.avatar_personality == 'sage' %}
+                            The Sage
+                        {% elif current_user.avatar_personality == 'champion' %}
+                            The Champion
+                        {% elif current_user.avatar_personality == 'strategist' %}
+                            The Strategist
+                        {% elif current_user.avatar_personality == 'zen_master' %}
+                            Zen Master
+                        {% else %}
+                            The Friend
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="text-end">
-                    <button class="btn btn-light" onclick="quickMoodCheck()">
-                        <i class="bi bi-emoji-smile"></i> Quick Mood Check
+
+                <!-- Message Zone -->
+                <div class="ai-message-container">
+                    <div class="ai-message-content" id="ai-message-content">
+                        {{ ai_message if ai_message else "Welcome back! Let's make today count!" }}
+                    </div>
+                    <div class="ai-message-meta">
+                        <small class="text-muted" id="ai-message-time">
+                            {% if message_timestamp %}
+                                {{ message_timestamp.strftime('%I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Actions Zone -->
+                <div class="ai-actions-container">
+                    <button class="btn btn-sm btn-outline-primary" onclick="quickMoodCheck()">
+                        <i class="bi bi-emoji-smile"></i> Quick Mood
+                    </button>
+                    <a href="{{ url_for('chat.chat_interface') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-chat-dots"></i> Chat with Elara
+                    </a>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            onclick="refreshAIMessage()"
+                            id="refresh-btn"
+                            {% if is_message_fresh %}disabled{% endif %}>
+                        <i class="fas fa-sync-alt"></i>
+                        <span class="spinner-border spinner-border-sm d-none" id="refresh-spinner"></span>
                     </button>
                 </div>
             </div>
@@ -460,6 +517,75 @@ async function loadLifeBalance() {
                 <p class="text-muted small mb-0">Unable to load balance data</p>
             </div>
         `;
+    }
+}
+
+// Refresh AI daily message
+async function refreshAIMessage() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    const messageContent = document.getElementById('ai-message-content');
+    const messageTime = document.getElementById('ai-message-time');
+    const spinner = document.getElementById('refresh-spinner');
+    const icon = refreshBtn.querySelector('.fa-sync-alt');
+
+    // Disable button and show loading
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('spinning');
+    spinner.classList.remove('d-none');
+    icon.classList.add('d-none');
+
+    try {
+        const response = await fetch('/api/ai/refresh-daily-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Update message with fade-in animation
+            messageContent.classList.add('updating');
+            messageContent.textContent = data.message;
+
+            // Update timestamp
+            const timestamp = new Date(data.timestamp);
+            messageTime.textContent = timestamp.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            // Remove animation class after it completes
+            setTimeout(() => {
+                messageContent.classList.remove('updating');
+            }, 500);
+
+            // Show success feedback
+            const statusBadge = document.querySelector('.ai-status-badge');
+            if (statusBadge) {
+                statusBadge.classList.add('status-active');
+            }
+        } else {
+            // Show error message
+            if (response.status === 429) {
+                alert(data.message || 'Please wait before refreshing again.');
+            } else {
+                alert('Unable to generate new message. Please try again later.');
+            }
+            // Re-enable button on error
+            refreshBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error refreshing AI message:', error);
+        alert('Connection error. Please check your internet and try again.');
+        refreshBtn.disabled = false;
+    } finally {
+        // Restore button state
+        refreshBtn.classList.remove('spinning');
+        spinner.classList.add('d-none');
+        icon.classList.remove('d-none');
     }
 }
 

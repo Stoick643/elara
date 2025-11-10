@@ -1,10 +1,23 @@
 import pytest
 import tempfile
 import os
+import sys
+from unittest.mock import MagicMock
 from datetime import date, datetime, timedelta
 from sqlalchemy.orm import make_transient
+
+# Mock external dependencies before importing app
+sys.modules['google.generativeai'] = MagicMock()
+sys.modules['openai'] = MagicMock()
+sys.modules['markdown'] = MagicMock()
+
 from app import create_app
 from models import db, User, Goal, Task, Habit, HabitLog, Value
+
+
+def refresh_object(model_class, object_id):
+    """Helper to query a fresh object from the database within current session."""
+    return model_class.query.get(object_id)
 
 @pytest.fixture
 def app():

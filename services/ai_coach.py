@@ -522,3 +522,122 @@ class AICoach:
         """Helper to get user's active goals."""
         from models import Goal
         return Goal.query.filter_by(user_id=user_id, status='active').limit(10).all()
+
+    def generate_daily_dashboard_message(self, user_id: int) -> Dict:
+        """
+        Generate a context-aware daily message for the dashboard.
+        Returns dict with: message, timestamp, personality, tokens_used
+        """
+        # Get current hour for time-of-day context
+        current_hour = datetime.now().hour
+
+        if current_hour < 12:
+            time_greeting = "Good morning"
+        elif current_hour < 17:
+            time_greeting = "Good afternoon"
+        else:
+            time_greeting = "Good evening"
+
+        # Build dashboard-specific context
+        user = User.query.get(user_id)
+        if not user:
+            return {
+                'message': "Welcome back! Let's make today count.",
+                'timestamp': datetime.utcnow(),
+                'personality': 'friend',
+                'tokens_used': 0
+            }
+
+        username = user.username
+
+        # Get today's tasks
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        today_tasks = Task.query.filter(
+            Task.user_id == user_id,
+            Task.due_date >= today_start,
+            Task.due_date < today_end
+        ).all()
+
+        # Get recent journal activity (last 3 days)
+        recent_date = datetime.utcnow() - timedelta(days=3)
+        recent_journal = JournalEntry.query.filter(
+            JournalEntry.user_id == user_id,
+            JournalEntry.created_at >= recent_date
+        ).order_by(JournalEntry.created_at.desc()).first()
+
+        # Get active goals count
+        active_goals_count = Goal.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).count()
+
+        # Get habit streak info
+        best_habit = Habit.query.filter_by(
+            user_id=user_id,
+            active=True
+        ).order_by(Habit.streak_count.desc()).first()
+
+        # Build context for AI
+        context_items = []
+        context_items.append(f"{time_greeting}, {username}!")
+
+        if today_tasks:
+            completed_today = len([t for t in today_tasks if t.completed])
+            pending_today = len(today_tasks) - completed_today
+            if pending_today > 0:
+                context_items.append(f"You have {pending_today} task{'s' if pending_today != 1 else ''} on your plate today.")
+            else:
+                context_items.append("You've completed all your tasks for today!")
+
+        if recent_journal:
+            days_ago = (datetime.utcnow() - recent_journal.created_at).days
+            if days_ago == 0:
+                context_items.append("You journaled today.")
+            elif days_ago == 1:
+                context_items.append("You journaled yesterday.")
+            else:
+                context_items.append(f"It's been {days_ago} days since your last journal entry.")
+
+        if active_goals_count > 0:
+            context_items.append(f"You're working on {active_goals_count} goal{'s' if active_goals_count != 1 else ''}.")
+
+        if best_habit and best_habit.streak_count > 0:
+            context_items.append(f"Your '{best_habit.name}' habit has a {best_habit.streak_count}-day streak!")
+
+        # Create prompt for AI
+        prompt = f"""Generate a brief, encouraging dashboard message for the user. Keep it to 2-3 sentences (max 150 words).
+
+        Current context:
+        {' '.join(context_items)}
+
+        The message should:
+        1. Acknowledge their current situation
+        2. Provide a gentle nudge or thoughtful question
+        3. Feel personal and motivating, not generic
+
+        Be concise and conversational."""
+
+        # Generate AI response
+        try:
+            response, tokens = self.generate_response(user_id, prompt, include_context=False)
+
+            return {
+                'message': response,
+                'timestamp': datetime.utcnow(),
+                'personality': user.avatar_personality or 'friend',
+                'tokens_used': tokens
+            }
+        except Exception as e:
+            current_app.logger.error(f"Failed to generate dashboard message: {str(e)}")
+            # Fallback to simple context-based message
+            fallback_message = ' '.join(context_items[:2])  # Use first 2 context items
+            if len(context_items) > 2:
+                fallback_message += " Let's make today count!"
+
+            return {
+                'message': fallback_message,
+                'timestamp': datetime.utcnow(),
+                'personality': user.avatar_personality or 'friend',
+                'tokens_used': 0
+            }
