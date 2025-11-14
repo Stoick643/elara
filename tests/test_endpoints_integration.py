@@ -6,6 +6,20 @@ import pytest
 from flask import url_for
 from models import db, User, Goal, Habit, Task, Value
 
+
+# Helper functions to get fresh objects from fixture IDs
+def get_user(user_id):
+    return User.query.get(user_id)
+
+def get_goal(goal_id):
+    return Goal.query.get(goal_id)
+
+def get_habit(habit_id):
+    return Habit.query.get(habit_id)
+
+def get_task(task_id):
+    return Task.query.get(task_id)
+
 class TestEndpointRouting:
     """Test that all endpoints resolve correctly without BuildError."""
     
@@ -27,11 +41,11 @@ class TestEndpointRouting:
         with app.app_context():
             assert url_for('goals.goals_list')
             assert url_for('goals.create_goal')
-            assert url_for('goals.view_goal', goal_id=test_goal.id)
-            assert url_for('goals.edit_goal', goal_id=test_goal.id)
+            assert url_for('goals.view_goal', goal_id=test_goal)
+            assert url_for('goals.edit_goal', goal_id=test_goal)
             
             # API routes
-            assert url_for('goals.get_goal_progress', goal_id=test_goal.id)
+            assert url_for('goals.get_goal_progress', goal_id=test_goal)
             assert url_for('goals.quick_create_goal')
             
     def test_habit_routes_resolve(self, app, test_user, test_habit):
@@ -39,11 +53,11 @@ class TestEndpointRouting:
         with app.app_context():
             assert url_for('habits.habits_dashboard')
             assert url_for('habits.create_habit_wizard')
-            assert url_for('habits.view_habit', habit_id=test_habit.id)
-            assert url_for('habits.edit_habit', habit_id=test_habit.id)
+            assert url_for('habits.view_habit', habit_id=test_habit)
+            assert url_for('habits.edit_habit', habit_id=test_habit)
             
             # API routes
-            assert url_for('habits.check_in_habit', habit_id=test_habit.id)
+            assert url_for('habits.check_in_habit', habit_id=test_habit)
             assert url_for('habits.get_habits_stats')
 
 class TestTemplateRendering:
@@ -86,13 +100,13 @@ class TestTemplateRendering:
     def test_view_templates_render(self, client, logged_in_user, test_goal, test_habit):
         """Test all view templates render correctly - catches missing view templates."""
         # Goal view
-        response = client.get(f'/goals/{test_goal.id}')
+        response = client.get(f'/goals/{test_goal}')
         assert response.status_code == 200
         assert b'Goal Overview' in response.data
         assert b'Linked Tasks' in response.data
         
         # Habit view  
-        response = client.get(f'/habits/{test_habit.id}')
+        response = client.get(f'/habits/{test_habit}')
         assert response.status_code == 200
         assert b'Habit Details' in response.data
         assert b'30-Day Progress Calendar' in response.data
@@ -162,7 +176,7 @@ class TestAPIEndpoints:
     
     def test_habit_checkin_api(self, client, logged_in_user, test_habit):
         """Test habit check-in API endpoint."""
-        response = client.post(f'/api/habit-checkin/{test_habit.id}')
+        response = client.post(f'/api/habit-checkin/{test_habit}')
         assert response.status_code == 200
         data = response.get_json()
         assert 'success' in data
@@ -170,7 +184,7 @@ class TestAPIEndpoints:
         
     def test_task_completion_api(self, client, logged_in_user, test_task):
         """Test task completion API endpoint."""
-        response = client.post(f'/api/complete-task/{test_task.id}')
+        response = client.post(f'/api/complete-task/{test_task}')
         assert response.status_code == 200
         data = response.get_json()
         assert 'success' in data
@@ -212,47 +226,50 @@ class TestErrorHandling:
 # Additional fixtures for test data
 @pytest.fixture
 def test_goal(app, test_user):
-    """Create a test goal."""
+    """Create a test goal and return its ID."""
     with app.app_context():
         goal = Goal(
-            user_id=test_user.id,
+            user_id=test_user,
             title="Test Goal",
             description="A test goal",
             status="active"
         )
         db.session.add(goal)
         db.session.commit()
-        return goal
+        goal_id = goal.id
+    return goal_id
 
-@pytest.fixture  
+@pytest.fixture
 def test_habit(app, test_user):
-    """Create a test habit."""
+    """Create a test habit and return its ID."""
     with app.app_context():
         habit = Habit(
-            user_id=test_user.id,
+            user_id=test_user,
             name="Test Habit",
             description="A test habit",
             cue="Test cue",
-            routine="Test routine", 
+            routine="Test routine",
             reward="Test reward",
             frequency="daily"
         )
         db.session.add(habit)
         db.session.commit()
-        return habit
+        habit_id = habit.id
+    return habit_id
 
 @pytest.fixture
 def test_task(app, test_user):
-    """Create a test task."""
+    """Create a test task and return its ID."""
     with app.app_context():
         task = Task(
-            user_id=test_user.id,
+            user_id=test_user,
             title="Test Task",
             description="A test task"
         )
         db.session.add(task)
         db.session.commit()
-        return task
+        task_id = task.id
+    return task_id
 
 @pytest.fixture
 def logged_in_user(client, test_user):
