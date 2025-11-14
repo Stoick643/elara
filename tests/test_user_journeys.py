@@ -400,10 +400,13 @@ def test_habit(app, logged_in_user):
 
 
 @pytest.fixture
-def logged_in_user(client, test_user):
+def logged_in_user(client, test_user, app):
     """Log in the test user."""
-    client.post('/auth/login', data={
-        'username': test_user.username,
-        'password': 'elara2024'
-    })
+    with app.app_context():
+        from models import User
+        user = User.query.get(test_user)  # test_user is an ID
+        client.post('/auth/login', data={
+            'username': user.username,
+            'password': 'elara2024'
+        })
     return test_user

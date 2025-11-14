@@ -12,6 +12,17 @@ from services.ai_coach import AICoach
 from models import User, Task, Goal, Habit, JournalEntry, db
 
 
+# Helper functions to get fresh objects from fixture IDs
+def get_user(user_id):
+    return User.query.get(user_id)
+
+def get_goal(goal_id):
+    return Goal.query.get(goal_id)
+
+def get_habit(habit_id):
+    return Habit.query.get(habit_id)
+
+
 @pytest.fixture
 def mock_ai_coach(app):
     """Create a mocked AICoach instance."""
@@ -28,7 +39,7 @@ def test_generate_daily_dashboard_message_basic(app, test_user, mock_ai_coach):
         with patch.object(mock_ai_coach, 'generate_response') as mock_generate:
             mock_generate.return_value = ("Good morning! Let's make today great!", 50)
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             assert result is not None
             assert 'message' in result
@@ -46,14 +57,14 @@ def test_generate_daily_dashboard_message_with_tasks(app, test_user, test_goal, 
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
         task1 = Task(
-            user_id=test_user.id,
-            goal_id=test_goal.id,
+            user_id=test_user,
+            goal_id=test_goal,
             title="Complete project",
             due_date=today
         )
         task2 = Task(
-            user_id=test_user.id,
-            goal_id=test_goal.id,
+            user_id=test_user,
+            goal_id=test_goal,
             title="Review docs",
             due_date=today,
             completed=True
@@ -64,7 +75,7 @@ def test_generate_daily_dashboard_message_with_tasks(app, test_user, test_goal, 
         with patch.object(mock_ai_coach, 'generate_response') as mock_generate:
             mock_generate.return_value = ("You have 1 task pending today!", 45)
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             assert result is not None
             assert 'message' in result
@@ -80,7 +91,7 @@ def test_generate_daily_dashboard_message_fallback(app, test_user, mock_ai_coach
             # Simulate API failure
             mock_generate.side_effect = Exception("API Error")
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             assert result is not None
             assert 'message' in result
@@ -109,7 +120,7 @@ def test_generate_daily_dashboard_message_response_length(app, test_user, mock_a
                 60
             )
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             # Message should be less than 200 words
             word_count = len(result['message'].split())
@@ -120,14 +131,14 @@ def test_generate_daily_dashboard_message_with_habits(app, test_user, test_habit
     """Test dashboard message with habit streaks."""
     with app.app_context():
         # Update habit streak
-        habit = Habit.query.get(test_habit.id)
+        habit = get_habit(test_habit)
         habit.streak_count = 7
         db.session.commit()
 
         with patch.object(mock_ai_coach, 'generate_response') as mock_generate:
             mock_generate.return_value = ("Your Morning Meditation habit has a 7-day streak!", 40)
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             assert result is not None
             call_args = mock_generate.call_args
@@ -148,7 +159,7 @@ def test_generate_daily_dashboard_message_time_of_day(app, test_user, mock_ai_co
 
                 mock_generate.return_value = ("Good morning!", 20)
 
-                result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+                result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
                 call_args = mock_generate.call_args
                 prompt = call_args[0][1]
@@ -160,7 +171,7 @@ def test_generate_daily_dashboard_message_with_journal(app, test_user, mock_ai_c
     with app.app_context():
         # Create a recent journal entry
         entry = JournalEntry(
-            user_id=test_user.id,
+            user_id=test_user,
             content="Feeling great today!",
             mood_score=8,
             created_at=datetime.utcnow() - timedelta(days=1)
@@ -171,7 +182,7 @@ def test_generate_daily_dashboard_message_with_journal(app, test_user, mock_ai_c
         with patch.object(mock_ai_coach, 'generate_response') as mock_generate:
             mock_generate.return_value = ("You journaled yesterday - great habit!", 35)
 
-            result = mock_ai_coach.generate_daily_dashboard_message(test_user.id)
+            result = mock_ai_coach.generate_daily_dashboard_message(test_user)
 
             assert result is not None
             call_args = mock_generate.call_args

@@ -251,6 +251,6 @@ class TestErrorHandling:
 def logged_in_user(client, test_user):
     """Log in the test user."""
     with client.session_transaction() as sess:
-        sess['_user_id'] = str(test_user.id)
+        sess['_user_id'] = str(test_user)  # test_user is already an ID
         sess['_fresh'] = True
     return test_user

@@ -8,6 +8,20 @@ import json
 from datetime import date, datetime, timedelta
 from models import db, User, Goal, Task, Habit, HabitLog
 
+
+# Helper functions to get fresh objects from fixture IDs
+def get_user(user_id):
+    return User.query.get(user_id)
+
+def get_goal(goal_id):
+    return Goal.query.get(goal_id)
+
+def get_habit(habit_id):
+    return Habit.query.get(habit_id)
+
+def get_task(task_id):
+    return Task.query.get(task_id)
+
 class TestDashboardRoutes:
     """Test dashboard functionality and personality integration."""
     
@@ -56,17 +70,17 @@ class TestGoalAPI:
                 'username': 'testuser',
                 'password': 'testpass'
             })
-            
+
             # Create tasks for the goal
-            task1 = Task(user_id=test_user.id, goal_id=test_goal.id, title="Task 1")
-            task2 = Task(user_id=test_user.id, goal_id=test_goal.id, title="Task 2", completed=True)
+            task1 = Task(user_id=test_user, goal_id=test_goal, title="Task 1")
+            task2 = Task(user_id=test_user, goal_id=test_goal, title="Task 2", completed=True)
             db.session.add_all([task1, task2])
             db.session.commit()
-            
+
             # Call API
-            response = client.get(f'/goals/api/goals/{test_goal.id}/progress')
+            response = client.get(f'/goals/api/goals/{test_goal}/progress')
             assert response.status_code == 200
-            
+
             data = json.loads(response.data)
             assert data['progress'] == 50  # 1 out of 2 tasks completed
             assert data['total_tasks'] == 2
@@ -99,7 +113,7 @@ class TestGoalAPI:
             # Verify goal was created
             goal = Goal.query.filter_by(title='API Test Goal').first()
             assert goal is not None
-            assert goal.user_id == test_user.id
+            assert goal.user_id == test_user
 
 class TestHabitAPI:
     """Test habit tracking API endpoints."""
@@ -114,20 +128,21 @@ class TestHabitAPI:
             })
             
             # Initial streak should be 0
-            assert test_habit.streak_count == 0
-            
+            habit = get_habit(test_habit)
+            assert habit.streak_count == 0
+
             # Check in via API
-            response = client.post(f'/habits/api/habits/{test_habit.id}/checkin')
+            response = client.post(f'/habits/api/habits/{test_habit}/checkin')
             assert response.status_code == 200
-            
+
             data = json.loads(response.data)
             assert data['success'] is True
             assert data['streak_count'] == 1
             assert 'streak_emoji' in data
-            
+
             # Verify database was updated
-            db.session.refresh(test_habit)
-            assert test_habit.streak_count == 1
+            habit = get_habit(test_habit)
+            assert habit.streak_count == 1
     
     def test_habit_checkin_prevents_duplicates(self, client, app, test_user, test_habit):
         """Habit check-in API prevents duplicate completions."""
@@ -139,13 +154,13 @@ class TestHabitAPI:
             })
             
             # First check-in should succeed
-            response1 = client.post(f'/habits/api/habits/{test_habit.id}/checkin')
+            response1 = client.post(f'/habits/api/habits/{test_habit}/checkin')
             assert response1.status_code == 200
             data1 = json.loads(response1.data)
             assert data1['success'] is True
             
             # Second check-in should fail
-            response2 = client.post(f'/habits/api/habits/{test_habit.id}/checkin')
+            response2 = client.post(f'/habits/api/habits/{test_habit}/checkin')
             assert response2.status_code == 200
             data2 = json.loads(response2.data)
             assert data2['success'] is False
@@ -196,7 +211,7 @@ class TestTaskAPI:
             })
             
             # Create task linked to goal
-            task = Task(user_id=test_user.id, goal_id=test_goal.id, title="API Test Task")
+            task = Task(user_id=test_user, goal_id=test_goal, title="API Test Task")
             db.session.add(task)
             db.session.commit()
             
@@ -285,7 +300,7 @@ class TestCalendarAPI:
             
             # Create task
             original_date = date.today()
-            task = Task(user_id=test_user.id, title="Movable Task", due_date=original_date)
+            task = Task(user_id=test_user, title="Movable Task", due_date=original_date)
             db.session.add(task)
             db.session.commit()
             
