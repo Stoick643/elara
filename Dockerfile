@@ -13,4 +13,4 @@ WORKDIR /app
 COPY --from=builder /app/.venv .venv/
 COPY . .
 
-CMD ["sh", "-c", ".venv/bin/flask db stamp head && .venv/bin/gunicorn 'app:create_app()' --bind 0.0.0.0:8080"]
+CMD ["sh", "-c", ".venv/bin/flask db upgrade && .venv/bin/gunicorn 'app:create_app()' --bind 0.0.0.0:8080"]
