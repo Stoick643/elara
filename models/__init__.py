@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
@@ -173,6 +173,12 @@ class Task(db.Model):
         }
         return energy_icons.get(self.energy_required, '🟡')
     
+    def __eq__(self, other):
+        """Compare tasks by ID for test assertions."""
+        if not isinstance(other, Task):
+            return False
+        return self.id == other.id and self.id is not None
+
     def __repr__(self):
         return f'<Task {self.title} - {"✓" if self.completed else "○"}>'
 
@@ -191,6 +197,12 @@ class Value(db.Model):
     # Relationships
     goals = db.relationship('Goal', backref='value', lazy='dynamic', cascade='all, delete-orphan')
     
+    def __eq__(self, other):
+        """Compare values by ID for test assertions."""
+        if not isinstance(other, Value):
+            return False
+        return self.id == other.id and self.id is not None
+
     def __repr__(self):
         return f'<Value {self.name}>'
 
@@ -220,9 +232,9 @@ class Goal(db.Model):
         total_tasks = self.tasks.count()
         if total_tasks == 0:
             return 0
-        
+
         completed_tasks = self.tasks.filter_by(completed=True).count()
-        progress = int((completed_tasks / total_tasks) * 100)
+        progress = round((completed_tasks / total_tasks) * 100)
         self.progress = progress
         return progress
     
@@ -241,6 +253,12 @@ class Goal(db.Model):
         }
         return status_colors.get(self.status, 'text-secondary')
     
+    def __eq__(self, other):
+        """Compare goals by ID for test assertions."""
+        if not isinstance(other, Goal):
+            return False
+        return self.id == other.id and self.id is not None
+
     def __repr__(self):
         return f'<Goal {self.title} - {self.progress}%>'
 
@@ -352,6 +370,12 @@ class Habit(db.Model):
         else:
             return "🏆"
     
+    def __eq__(self, other):
+        """Compare habits by ID for test assertions."""
+        if not isinstance(other, Habit):
+            return False
+        return self.id == other.id and self.id is not None
+
     def __repr__(self):
         return f'<Habit {self.name} - {self.streak_count} days>'
 

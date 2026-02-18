@@ -284,7 +284,7 @@ class AICoach:
     def _generate_moonshot_response(self, system_prompt: str, message: str) -> Tuple[str, int]:
         """Generate response using Moonshot (Kimi) API."""
         response = self.client.chat.completions.create(
-            model="kimi-k2-0905-preview",  # Use the latest Kimi model
+            model="kimi-k2.5",  # Use the latest Kimi model
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message}

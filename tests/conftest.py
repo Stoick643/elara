@@ -4,7 +4,6 @@ import os
 import sys
 from unittest.mock import MagicMock
 from datetime import date, datetime, timedelta
-from sqlalchemy.orm import make_transient
 
 # Mock external dependencies before importing app
 sys.modules['google.generativeai'] = MagicMock()
@@ -55,46 +54,40 @@ def runner(app):
 
 @pytest.fixture
 def test_user(app):
-    """Create a test user."""
+    """Create a test user and return its ID."""
     with app.app_context():
         user = User(username="testuser")
         user.set_password("testpass")
         user.avatar_personality = "friend"
+        user.onboarding_completed = True
+        user.onboarding_step = 4
         db.session.add(user)
         db.session.commit()
-        # Make transient so tests can reattach to their sessions
         user_id = user.id
-        db.session.expunge(user)
-        make_transient(user)
-        user.id = user_id  # Restore ID after making transient
-        return user
+    return user_id
 
 @pytest.fixture
 def test_value(app, test_user):
-    """Create a test life area value."""
+    """Create a test life area value and return its ID."""
     with app.app_context():
         value = Value(
-            user_id=test_user.id,
+            user_id=test_user,
             name="Health",
             description="Physical and mental wellbeing",
             priority=8
         )
         db.session.add(value)
         db.session.commit()
-        # Make transient so tests can reattach to their sessions
         value_id = value.id
-        db.session.expunge(value)
-        make_transient(value)
-        value.id = value_id  # Restore ID after making transient
-        return value
+    return value_id
 
 @pytest.fixture
 def test_goal(app, test_user, test_value):
-    """Create a test goal linked to a value."""
+    """Create a test goal linked to a value and return its ID."""
     with app.app_context():
         goal = Goal(
-            user_id=test_user.id,
-            value_id=test_value.id,
+            user_id=test_user,
+            value_id=test_value,
             title="Exercise 3x per week",
             description="Build consistent exercise habit",
             target_date=date.today() + timedelta(days=30),
@@ -102,19 +95,15 @@ def test_goal(app, test_user, test_value):
         )
         db.session.add(goal)
         db.session.commit()
-        # Make transient so tests can reattach to their sessions
         goal_id = goal.id
-        db.session.expunge(goal)
-        make_transient(goal)
-        goal.id = goal_id  # Restore ID after making transient
-        return goal
+    return goal_id
 
 @pytest.fixture
 def test_habit(app, test_user):
-    """Create a test habit with proper cue-routine-reward structure."""
+    """Create a test habit with proper cue-routine-reward structure and return its ID."""
     with app.app_context():
         habit = Habit(
-            user_id=test_user.id,
+            user_id=test_user,
             name="Morning Meditation",
             description="10 minutes of mindfulness",
             cue="After I wake up and brush my teeth",
@@ -124,9 +113,45 @@ def test_habit(app, test_user):
         )
         db.session.add(habit)
         db.session.commit()
-        # Make transient so tests can reattach to their sessions
         habit_id = habit.id
-        db.session.expunge(habit)
-        make_transient(habit)
-        habit.id = habit_id  # Restore ID after making transient
-        return habit
+    return habit_id
+
+@pytest.fixture
+def logged_in_client(client, app):
+    """Return a client with logged-in test user."""
+    with app.app_context():
+        # Create or get test user
+        user = User.query.filter_by(username='testuser').first()
+        if not user:
+            user = User(username='testuser')
+            user.set_password('testpass')
+            user.avatar_personality = 'friend'
+            user.onboarding_completed = True
+            user.onboarding_step = 4
+            db.session.add(user)
+            db.session.commit()
+
+        # Actually log in
+        client.post('/auth/login', data={
+            'username': 'testuser',
+            'password': 'testpass'
+        }, follow_redirects=True)
+
+    return client
+
+# Helper functions for tests to get fresh objects from IDs
+def get_user(user_id):
+    """Get a fresh User object by ID."""
+    return User.query.get(user_id)
+
+def get_value(value_id):
+    """Get a fresh Value object by ID."""
+    return Value.query.get(value_id)
+
+def get_goal(goal_id):
+    """Get a fresh Goal object by ID."""
+    return Goal.query.get(goal_id)
+
+def get_habit(habit_id):
+    """Get a fresh Habit object by ID."""
+    return Habit.query.get(habit_id)
