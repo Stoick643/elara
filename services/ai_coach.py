@@ -290,7 +290,7 @@ class AICoach:
                 {"role": "user", "content": message}
             ],
             max_tokens=self.max_tokens,
-            temperature=self.temperature
+            temperature=1  # kimi-k2.5 only supports temperature=1
         )
         
         response_text = response.choices[0].message.content
