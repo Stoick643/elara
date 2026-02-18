@@ -57,20 +57,20 @@ def create_app(config_name=None):
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(settings_bp)
     
-    # Create database tables
+    # Create default user if not exists (tables created by flask db upgrade)
     with app.app_context():
-        db.create_all()
-        
-        # Create default user if not exists
-        if User.query.count() == 0:
-            default_user = User(
-                username=app.config['DEFAULT_USERNAME'],
-                avatar_personality='friend'  # Set default personality for testing
-            )
-            default_user.set_password(app.config['DEFAULT_PASSWORD'])
-            db.session.add(default_user)
-            db.session.commit()
-            print(f"Created default user: {app.config['DEFAULT_USERNAME']} with Friend personality")
+        try:
+            if User.query.count() == 0:
+                default_user = User(
+                    username=app.config['DEFAULT_USERNAME'],
+                    avatar_personality='friend'
+                )
+                default_user.set_password(app.config['DEFAULT_PASSWORD'])
+                db.session.add(default_user)
+                db.session.commit()
+                print(f"Created default user: {app.config['DEFAULT_USERNAME']} with Friend personality")
+        except Exception:
+            pass  # Tables don't exist yet (first deploy, before migration)
     
     # Error handlers
     @app.errorhandler(404)
